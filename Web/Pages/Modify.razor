@@ -1,0 +1,254 @@
+@page "/moar-supplies/modify"
+@attribute [Authorize(Policy = "Administrator")]
+@layout BaseMudBlazorLayout
+@inject ConfigState ConfigState
+@inject ConfigStorage ConfigStorage
+@inject NavigationManager NavigationManager
+
+<PageTitle>Modify Stimulant - Moar Supplies</PageTitle>
+
+<MoarSuppliesLayout>
+    <main class="moar-home">
+        <section class="moar-home-shell">
+            <MoarNavigation CurrentPage="Modify" />
+
+            <section class="moar-modify" aria-labelledby="moar-modify-title">
+                <div class="moar-modify__heading">
+                    <div>
+                        <p class="moar-kicker">MODIFY WORKSPACE</p>
+                        <h1 id="moar-modify-title">@EditorTitle</h1>
+                        <p>Shape a stimulant with friendly controls. Saved definitions are applied the next time the SPT server starts.</p>
+                    </div>
+                    <div class="moar-modify__actions">
+                        <button type="button" class="moar-add-stim" @onclick="CreateDraft"><span aria-hidden="true">+</span> Add Stim</button>
+                        <span class="moar-prototype-badge">One file per stim</span>
+                    </div>
+                </div>
+
+                @if (Draft is null)
+                {
+                    <div class="moar-database__empty">
+                        <strong>No definition selected</strong>
+                        <p>Choose a stim from the <a href="/moar-supplies/database">database</a>, or use <strong>Add Stim</strong> to start a new one.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="moar-modify__layout">
+                        <form class="moar-editor" @onsubmit:preventDefault>
+                            <section class="moar-editor__section">
+                                <div class="moar-editor__section-heading"><p class="moar-kicker">BASE STIM</p><h2>Start with a familiar stim</h2><p>Choose the item to build from, then set how many uses the new stim has.</p></div>
+                                <div class="moar-form-grid">
+                                    <label>Base stim<select @bind="Draft.BaseItem">@foreach (string item in BaseItems) { <option value="@item">@DisplayName(item)</option> }</select></label>
+                                    <label>Uses<select @bind="Draft.Uses">@foreach (int uses in Enumerable.Range(1, 5)) { <option value="@uses">@uses use@(uses == 1 ? string.Empty : "s")</option> }</select></label>
+                                    <div class="moar-tag-field moar-form-grid__full"><span>Tags <small>(prototype display)</small></span><div class="moar-tag-list">@foreach (string tag in Draft.Tags) { <span>@tag</span> }</div></div>
+                                </div>
+                            </section>
+
+                            <section class="moar-editor__section">
+                                <div class="moar-editor__section-heading"><p class="moar-kicker">IDENTITY</p><h2>What players see</h2></div>
+                                <div class="moar-form-grid">
+                                    <label>Definition ID<input @bind="Draft.Id" placeholder="e.g. argus" /></label>
+                                    <label class="moar-status-field"><span class="moar-status-field__label">@(Draft.Enabled ? "Enabled" : "Disabled")</span><span class="moar-status-toggle"><input type="checkbox" @bind="Draft.Enabled" /><span class="moar-status-toggle__control" aria-hidden="true"></span><span class="moar-status-toggle__description">Include this definition</span></span></label>
+                                    <label>Display name<input @bind="Draft.Identity.Name" placeholder="e.g. Argus" /></label>
+                                    <label>Short name<input @bind="Draft.Identity.ShortName" placeholder="e.g. ARG-100" /></label>
+                                    <label class="moar-description-field moar-form-grid__full">Description<textarea rows="4" @bind="Draft.Identity.Description" placeholder="Describe what the stimulant does and the tradeoff it creates."></textarea></label>
+                                </div>
+                            </section>
+
+                            <section class="moar-editor__section">
+                                <div class="moar-editor__section-heading"><p class="moar-kicker">EFFECT PROFILE</p><h2>Build the tradeoff</h2><p>Each effect gets its own timing controls. The value appears automatically when that effect needs one.</p></div>
+                                <div class="moar-effect-editor-list">
+                                    @foreach (BuffDefinition buff in Draft.Buffs)
+                                    {
+                                        <article class="moar-effect-editor">
+                                            <div class="moar-effect-editor__topline"><strong>@DisplayName(buff.Effect)</strong><button type="button" class="moar-icon-button" title="Remove effect" @onclick="() => RemoveEffect(buff)">×</button></div>
+                                            <div class="moar-effect-fields">
+                                                @if (RequiresValue(buff.Effect)) { <label>Value <span class="moar-effect-unit--placeholder" aria-hidden="true">amount</span><input type="number" step="any" @bind="buff.Value" /></label> }
+                                                <label>Duration <span>seconds</span><input type="number" min="0" @bind="buff.Duration" /></label>
+                                                <label>Delay <span>seconds</span><input type="number" min="0" @bind="buff.Delay" /></label>
+                                            </div>
+                                        </article>
+                                    }
+                                </div>
+                                <button type="button" class="moar-add-effect" @onclick="ToggleEffectPicker"><span>+</span> Add an effect</button>
+                                @if (EffectPickerOpen)
+                                {
+                                    <div class="moar-effect-picker" aria-label="Available effects">
+                                        <p>Choose an effect to add</p>
+                                        <div>@foreach (string effect in AvailableEffects) { <button type="button" @onclick="() => AddEffect(effect)">@DisplayName(effect)</button> }</div>
+                                    </div>
+                                }
+                            </section>
+
+                            <div class="moar-editor__bottom-row">
+                                <section class="moar-editor__section">
+                                    <div class="moar-editor__section-heading"><p class="moar-kicker">AVAILABILITY</p><h2>Place it in the world</h2></div>
+                                    <div class="moar-form-grid">
+                                        <label class="moar-status-field"><span class="moar-status-field__label">@(Draft.Trader!.Enabled ? "Enabled" : "Disabled")</span><span class="moar-status-toggle"><input type="checkbox" @bind="Draft.Trader!.Enabled" /><span class="moar-status-toggle__control" aria-hidden="true"></span><span class="moar-status-toggle__description">Make this stim purchasable</span></span></label>
+                                        @if (Draft.Trader!.Enabled)
+                                        {
+                                            <label>Trader<select @bind="Draft.Trader!.Trader">@foreach (string trader in Traders) { <option value="@trader">@DisplayName(trader)</option> }</select></label>
+                                            <label>Loyalty level<select @bind="Draft.Trader!.LoyaltyLevel">@foreach (int level in Enumerable.Range(1, 4)) { <option value="@level">Level @level</option> }</select></label>
+                                            <label>Price<input type="number" min="1" placeholder="Roubles" @bind="Draft.Trader!.Price" /></label>
+                                        }
+                                    </div>
+                                    @if (!IsCreating)
+                                    {
+                                        <div class="moar-delete-action"><button type="button" class="moar-delete-button" @onclick="OpenDeleteConfirmation">Delete Stim</button></div>
+                                    }
+                                </section>
+                            </div>
+                        </form>
+                        <aside class="moar-editor-preview" aria-label="Definition preview">
+                            <p class="moar-kicker">LIVE PREVIEW</p><h2>@Draft.Identity.Name</h2><span>@Draft.Identity.ShortName</span><p>@Draft.Identity.Description</p>
+                            <dl><div><dt>Base item</dt><dd>@DisplayName(Draft.BaseItem)</dd></div><div><dt>Uses</dt><dd>@Draft.Uses</dd></div><div><dt>Effects</dt><dd>@Draft.Buffs.Count</dd></div></dl>
+                            <button type="button" class="moar-button" @onclick="SaveDraftAsync" disabled="@IsSaving">@(IsSaving ? "Saving…" : "Save definition")</button>
+                            @if (SaveErrors.Count > 0)
+                            {
+                                <div class="moar-save-message moar-save-message--error" role="alert">
+                                    <strong>Could not save</strong>
+                                    <ul>@foreach (string error in SaveErrors) { <li>@error</li> }</ul>
+                                </div>
+                            }
+                            else if (!string.IsNullOrWhiteSpace(SaveMessage))
+                            {
+                                <p class="moar-save-message moar-save-message--success" role="status">@SaveMessage</p>
+                            }
+                        </aside>
+                    </div>
+                }
+
+                @if (DeleteConfirmationOpen)
+                {
+                    <div class="moar-delete-dialog-backdrop" role="presentation" @onclick="CloseDeleteConfirmation">
+                        <section class="moar-delete-dialog" role="alertdialog" aria-modal="true" aria-labelledby="moar-delete-dialog-title" aria-describedby="moar-delete-dialog-description" @onclick:stopPropagation>
+                            <p class="moar-kicker">DELETE STIM</p>
+                            <h2 id="moar-delete-dialog-title">Delete @Draft?.Identity.Name?</h2>
+                            <p id="moar-delete-dialog-description">This will completely remove the definition file from the database. It cannot be undone.</p>
+                            @if (DeleteErrors.Count > 0)
+                            {
+                                <div class="moar-save-message moar-save-message--error" role="alert"><strong>Could not delete</strong><ul>@foreach (string error in DeleteErrors) { <li>@error</li>}</ul></div>
+                            }
+                            <div class="moar-delete-dialog__actions"><button type="button" class="moar-button moar-button--secondary" @onclick="CloseDeleteConfirmation" disabled="@IsDeleting">Cancel</button><button type="button" class="moar-delete-button" @onclick="DeleteDraftAsync" disabled="@IsDeleting">@(IsDeleting ? "Deleting…" : "Proceed with deletion")</button></div>
+                        </section>
+                    </div>
+                }
+            </section>
+        </section>
+    </main>
+</MoarSuppliesLayout>
+
+@code {
+    [SupplyParameterFromQuery(Name = "stim")] public string? StimId { get; set; }
+    private StimDefinition? Draft;
+    private bool IsCreating;
+    private bool EffectPickerOpen;
+    private bool IsSaving;
+    private bool IsDeleting;
+    private bool DeleteConfirmationOpen;
+    private string? SaveMessage;
+    private List<string> SaveErrors = [];
+    private List<string> DeleteErrors = [];
+    private static readonly string[] BaseItems = ["2a2btg", "3btg", "adrenaline", "ahf1m", "etgchange", "l1", "meldonin", "mule", "obdolbos", "obdolbos2", "p22", "perfotoran", "pnb", "propital", "sj1", "sj6", "sj9", "sj12", "trimadol", "xtg12", "zagustin", "morphine"];
+    private static readonly string[] Traders = ["therapist", "prapor", "skier"];
+    private static readonly string[] AvailableEffects = ["aiming", "antidote", "assault", "attachedLauncher", "attention", "bodyTemperature", "charisma", "concussion", "covertMovement", "crafting", "damageModifier", "dmr", "endurance", "energyRate", "fieldMedicine", "firstAid", "fracture", "frostbite", "handsTremor", "health", "healthRate", "heavyBleeding", "heavyVests", "hearingDistance", "hideoutManagement", "hmg", "hydrationRate", "immunity", "intellect", "launcher", "lightBleeding", "lightVests", "lmg", "lockpicking", "magDrills", "maxStamina", "meleeDamage", "memory", "metabolism", "nightOps", "painSuppression", "perception", "pistol", "proneMovement", "quantumTunnelling", "recoilControl", "removeAllBloodLosses", "revolver", "search", "shotgun", "silentOps", "skillHealth", "smg", "sniper", "sniping", "sprintInertia", "staminaRate", "strength", "stressResistance", "surgery", "throwingStrength", "troubleshooting", "tunnelVision", "unknownToxin", "vitality", "weaponErgonomics", "weaponSpread", "weaponSwapSpeed", "weaponTreatment", "weightLimit", "zombieInfection"];
+    private string EditorTitle => Draft is null
+        ? "Modify stimulant"
+        : IsCreating ? "Create stimulant" : $"Modify {Draft.Identity.Name}";
+
+    protected override void OnParametersSet()
+    {
+        if (string.IsNullOrWhiteSpace(StimId))
+        {
+            if (!IsCreating)
+            {
+                Draft = null;
+            }
+
+            EffectPickerOpen = false;
+            return;
+        }
+
+        StimDefinition? source = ConfigState.Current?.Stims.FirstOrDefault(stim => string.Equals(stim.Id, StimId, StringComparison.OrdinalIgnoreCase));
+        Draft = source is null ? null : Copy(source);
+        IsCreating = false;
+        EffectPickerOpen = false;
+        SaveMessage = null;
+        SaveErrors = [];
+    }
+
+    private void CreateDraft()
+    {
+        Draft = new StimDefinition
+        {
+            Enabled = true,
+            BaseItem = BaseItems[0],
+            Uses = 1,
+            Trader = new TraderDefinition { Trader = Traders[0], LoyaltyLevel = 1 }
+        };
+        IsCreating = true;
+        EffectPickerOpen = false;
+        SaveMessage = null;
+        SaveErrors = [];
+    }
+
+    private void ToggleEffectPicker() => EffectPickerOpen = !EffectPickerOpen;
+    private void AddEffect(string effect) { Draft!.Buffs.Add(new BuffDefinition { Effect = effect, Value = RequiresValue(effect) ? 0 : null, Duration = 60 }); EffectPickerOpen = false; }
+    private void RemoveEffect(BuffDefinition buff) => Draft!.Buffs.Remove(buff);
+    private void OpenDeleteConfirmation() { DeleteErrors = []; DeleteConfirmationOpen = true; }
+    private void CloseDeleteConfirmation() { if (!IsDeleting) { DeleteConfirmationOpen = false; DeleteErrors = []; } }
+
+    private async Task DeleteDraftAsync()
+    {
+        if (Draft is null || string.IsNullOrWhiteSpace(StimId) || IsCreating || IsDeleting)
+        {
+            return;
+        }
+
+        IsDeleting = true;
+        DeleteErrors = [];
+        ConfigSaveResult result = await ConfigStorage.DeleteAsync(StimId, CancellationToken.None);
+        IsDeleting = false;
+        DeleteErrors = result.Errors.ToList();
+
+        if (result.Succeeded)
+        {
+            DeleteConfirmationOpen = false;
+            NavigationManager.NavigateTo("/moar-supplies/database");
+        }
+    }
+
+    private async Task SaveDraftAsync()
+    {
+        if (Draft is null || IsSaving)
+        {
+            return;
+        }
+
+        IsSaving = true;
+        SaveMessage = null;
+        SaveErrors = [];
+
+        ConfigSaveResult result = await ConfigStorage.SaveAsync(Draft, IsCreating ? null : StimId, CancellationToken.None);
+        IsSaving = false;
+        SaveErrors = result.Errors.ToList();
+
+        if (result.Succeeded)
+        {
+            IsCreating = false;
+            StimId = Draft.Id;
+            SaveMessage = "Saved to config/stims. Restart the SPT server to apply this definition in-game.";
+        }
+    }
+
+    private static bool RequiresValue(string effect) => !BuffMappings.TryGet(effect, out BuffMapping mapping) || mapping.RequiresValue;
+    private static string DisplayName(string value) => System.Text.RegularExpressions.Regex.Replace(value, "(?<!^)([A-Z])", " $1");
+    private static StimDefinition Copy(StimDefinition source) => new()
+    {
+        Id = source.Id, Enabled = source.Enabled, BaseItem = source.BaseItem, Uses = source.Uses, Tags = [.. source.Tags],
+        Identity = new StimIdentity { Name = source.Identity.Name, ShortName = source.Identity.ShortName, Description = source.Identity.Description },
+        Buffs = source.Buffs.Select(buff => new BuffDefinition { Effect = buff.Effect, Value = buff.Value, Duration = buff.Duration, Delay = buff.Delay }).ToList(),
+        Trader = source.Trader is null ? new TraderDefinition() : new TraderDefinition { Enabled = source.Trader.Enabled, Trader = source.Trader.Trader, LoyaltyLevel = source.Trader.LoyaltyLevel, Price = source.Trader.Price }
+    };
+}

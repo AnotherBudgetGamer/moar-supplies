@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <SptRuntimeDirectory Condition="'$(SptRuntimeDirectory)' == ''">$(MSBuildThisFileDirectory)..\spt-read-only\SPP-Tarkov\SPT_Runtime\</SptRuntimeDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="SemanticVersioning">
+      <HintPath>$(SptRuntimeDirectory)SemanticVersioning.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SPTarkov.DI">
+      <HintPath>$(SptRuntimeDirectory)SPTarkov.DI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SPTarkov.Server.Core">
+      <HintPath>$(SptRuntimeDirectory)SPTarkov.Server.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SPTarkov.Server.Web">
+      <HintPath>$(SptRuntimeDirectory)SPTarkov.Server.Web.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="config\**\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="wwwroot\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

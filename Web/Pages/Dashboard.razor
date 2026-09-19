@@ -1,0 +1,89 @@
+@page "/moar-supplies"
+@attribute [Authorize(Policy = "Administrator")]
+@layout BaseMudBlazorLayout
+
+<PageTitle>Moar Supplies</PageTitle>
+
+<MoarSuppliesLayout>
+    <main class="moar-home">
+        <section class="moar-home-shell">
+            <MoarNavigation CurrentPage="Home" />
+
+            <div class="moar-home-hero">
+                <div class="moar-home-hero__copy">
+                    <p class="moar-kicker">BUILD THE TARKOV YOU WANT TO PLAY</p>
+                    <h1>Stims should fit your raid—not dictate it.</h1>
+                    <p class="moar-home-lead">Moar Supplies makes custom stimulants simple to understand and easy to control. View what each stim does, then add, remove, and tune effects without being locked into someone else’s preset.</p>
+                    <p class="moar-home-body">Keep it grounded, build a weightless endurance setup, or turn a hatchet run into a boss-hunting power trip. The point is not to limit your playstyle—it is to give you a clean way to make Tarkov a little more fun on your terms.</p>
+                </div>
+
+                <aside class="moar-home-hero__panel" aria-label="What Moar Supplies lets you control">
+                    <p class="moar-kicker">YOUR WORKSHOP</p>
+                    <ul class="moar-control-list">
+                        <li><span aria-hidden="true">01</span><div><strong>Create stims</strong><small>Start with a familiar base item.</small></div></li>
+                        <li><span aria-hidden="true">02</span><div><strong>Shape effects</strong><small>Mix benefits, tradeoffs, timing, and duration.</small></div></li>
+                        <li><span aria-hidden="true">03</span><div><strong>Set the rules</strong><small>Choose uses, trader access, price, and loyalty level.</small></div></li>
+                    </ul>
+                </aside>
+            </div>
+
+            <section class="moar-guide" aria-labelledby="moar-guide-title">
+                <div class="moar-guide__heading">
+                    <p class="moar-kicker">HOW IT WORKS</p>
+                    <h2 id="moar-guide-title">Make a stim in three clear steps.</h2>
+                    <p>The Modify workspace will guide every choice with friendly controls—no raw SPT identifiers required.</p>
+                </div>
+                <ol class="moar-step-list">
+                    <li><span class="moar-step-number">1</span><div><h3>Start with the identity</h3><p>Choose a base stim, give it a name and short name, and write the item description players will see.</p></div></li>
+                    <li><span class="moar-step-number">2</span><div><h3>Build the effect profile</h3><p>Add or remove effects, then tune each value, duration, and delay to create the exact tradeoff you want.</p></div></li>
+                    <li><span class="moar-step-number">3</span><div><h3>Place it in your world</h3><p>Set uses and optional trader availability, then save a definition that fits your own Tarkov experience.</p></div></li>
+                </ol>
+            </section>
+        </section>
+
+        <section class="moar-next" aria-labelledby="moar-next-title">
+            <div class="moar-next__intro">
+                <div>
+                    <p class="moar-kicker">UP NEXT</p>
+                    <h2 id="moar-next-title">From idea to stim library.</h2>
+                    <p>Pick a familiar base, shape the tradeoff, and save it. Your new stim is ready to find in the database.</p>
+                </div>
+            </div>
+            <div class="moar-next__cta">
+                <p>Ready to create your stim? Press the button <span aria-hidden="true">↓</span></p>
+                <a class="moar-next__action" href="/moar-supplies/modify"><span aria-hidden="true">+</span> Create a stim</a>
+            </div>
+
+            <ol class="moar-workflow">
+                <li class="moar-workflow__step moar-workflow__step--identity">
+                    <div class="moar-workflow__copy"><span class="moar-workflow__number">01</span><div><p>Start with a base</p><h3>Name your stim</h3></div></div>
+                    <div class="moar-workflow__frame"><img src="/MoarSupplies/assets/stim-basics.png" alt="The Modify workspace showing base stim and identity controls" /></div>
+                </li>
+                <li class="moar-workflow__connector" aria-hidden="true"><span>+</span><svg viewBox="0 0 92 34" focusable="false"><path d="M3 17h72" /><path d="m65 7 17 10-17 10" /></svg></li>
+                <li class="moar-workflow__step moar-workflow__step--effects">
+                    <div class="moar-workflow__copy"><span class="moar-workflow__number">02</span><div><p>Shape the profile</p><h3>Add the tradeoff</h3></div></div>
+                    <div class="moar-workflow__frame"><img src="/MoarSupplies/assets/stim-effects.png" alt="Effect profile controls with selectable stimulant effects" /></div>
+                </li>
+                <li class="moar-workflow__connector" aria-hidden="true"><span>✓</span><svg viewBox="0 0 92 34" focusable="false"><path d="M3 17h72" /><path d="m65 7 17 10-17 10" /></svg></li>
+                <li class="moar-workflow__step moar-workflow__step--library">
+                    <div class="moar-workflow__copy"><span class="moar-workflow__number">03</span><div><p>Save and play</p><h3>Find it in Database</h3></div></div>
+                    <div class="moar-workflow__frame"><img src="/MoarSupplies/assets/database-details.png" alt="A saved stim displayed in the database with effects and trader availability" /></div>
+                </li>
+            </ol>
+
+            <section class="moar-effect-catalog" aria-labelledby="moar-effect-catalog-title">
+                <div class="moar-effect-catalog__heading">
+                    <div><p class="moar-kicker">YOUR EFFECT TOOLKIT</p><h3 id="moar-effect-catalog-title">Create your own stim with any effect.</h3></div>
+                    <p>Stack up the benefits your raid needs, or add a drawback to keep the recipe interesting. Every option is ready to choose in the builder.</p>
+                </div>
+                <div class="moar-effect-catalog__groups">
+                    <section class="moar-effect-catalog__group moar-effect-catalog__group--combat"><h4>Combat &amp; weapons</h4><div><span>Aiming</span><span>Assault</span><span>Attached launcher</span><span>Damage modifier</span><span>DMR</span><span>HMG</span><span>Launcher</span><span>LMG</span><span>Mag drills</span><span>Melee damage</span><span>Pistol</span><span>Recoil control</span><span>Revolver</span><span>Shotgun</span><span>SMG</span><span>Sniper</span><span>Sniping</span><span>Throwing strength</span><span>Weapon ergonomics</span><span>Weapon spread</span><span>Weapon swap speed</span><span>Weapon treatment</span></div></section>
+                    <section class="moar-effect-catalog__group moar-effect-catalog__group--stamina"><h4>Stamina &amp; movement</h4><div><span>Covert movement</span><span>Endurance</span><span>Heavy vests</span><span>Light vests</span><span>Max stamina</span><span>Prone movement</span><span>Sprint inertia</span><span>Stamina rate</span><span>Strength</span><span>Weight limit</span></div></section>
+                    <section class="moar-effect-catalog__group moar-effect-catalog__group--health"><h4>Health &amp; survival</h4><div><span>Antidote</span><span>Body temperature</span><span>Energy rate</span><span>Field medicine</span><span>First aid</span><span>Health</span><span>Health rate</span><span>Hydration rate</span><span>Immunity</span><span>Metabolism</span><span>Pain suppression</span><span>Remove all blood losses</span><span>Skill health</span><span>Surgery</span><span>Vitality</span></div></section>
+                    <section class="moar-effect-catalog__group moar-effect-catalog__group--mind"><h4>Mind &amp; skills</h4><div><span>Attention</span><span>Charisma</span><span>Hideout management</span><span>Intellect</span><span>Lockpicking</span><span>Memory</span><span>Night ops</span><span>Perception</span><span>Search</span><span>Stress resistance</span><span>Troubleshooting</span><span>Crafting</span></div></section>
+                    <section class="moar-effect-catalog__group moar-effect-catalog__group--risk"><h4>Risk &amp; tradeoffs</h4><div><span>Concussion</span><span>Fracture</span><span>Frostbite</span><span>Hands tremor</span><span>Heavy bleeding</span><span>Light bleeding</span><span>Quantum tunnelling</span><span>Tunnel vision</span><span>Unknown toxin</span><span>Zombie infection</span></div></section>
+                </div>
+            </section>
+        </section>
+    </main>
+</MoarSuppliesLayout>

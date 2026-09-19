@@ -1,0 +1,89 @@
+{
+  "id": "ravana",
+  "enabled": true,
+  "identity": {
+    "name": "Ravana",
+    "shortName": "RVN-10/20",
+    "description": "An aggressive combat-neurostimulant engineered by TerraGroup for breach-and-clear operations in heavy fire zones. Synthesized to mimic the mythic demon king Ravana, RVN-10 forces the user's nervous system into a state of hyper-coordinated violence. The compound provides supernatural strength, unnatural recoil mitigation, allows lightning-fast weapon handling, and temporarily overrides the body's natural shock response, allowing operators to charge through incoming fire as an unstoppable, multi-limbed force of nature."
+  },
+  "baseItem": "pnb",
+  "uses": 1,
+  "tags": [
+    "combat",
+    "aggression",
+    "breaching"
+  ],
+  "buffs": [
+    {
+      "effect": "recoilControl",
+      "value": 0.2,
+      "duration": 300,
+      "delay": 0
+    },
+    {
+      "effect": "weaponErgonomics",
+      "value": 20,
+      "duration": 300,
+      "delay": 0
+    },
+    {
+      "effect": "weaponSwapSpeed",
+      "value": 2.0,
+      "duration": 300,
+      "delay": 0
+    },
+    {
+      "effect": "sprintInertia",
+      "value": 0.15,
+      "duration": 300,
+      "delay": 0
+    },
+    {
+      "effect": "immunity",
+      "value": 50,
+      "duration": 30,
+      "delay": 0
+    },
+    {
+      "effect": "painSuppression",
+      "duration": 30,
+      "delay": 0
+    },
+    {
+      "effect": "throwingStrength",
+      "value": 10,
+      "duration": 300,
+      "delay": 0
+    },
+    {
+      "effect": "meleeDamage",
+      "value": 5.0,
+      "duration": 300,
+      "delay": 0
+    },
+    {
+      "effect": "handsTremor",
+      "value": 1.0,
+      "duration": 60,
+      "delay": 120
+    },
+    {
+      "effect": "hydrationRate",
+      "value": -3,
+      "duration": 60,
+      "delay": 0
+    },
+    {
+      "effect": "energyRate",
+      "value": -3,
+      "duration": 60,
+      "delay": 0
+    }
+  ],
+  "trader": {
+    "enabled": true,
+    "trader": "therapist",
+    "loyaltyLevel": 1,
+    "price": 20000
+  }
+}

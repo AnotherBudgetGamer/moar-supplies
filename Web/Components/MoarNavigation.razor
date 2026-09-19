@@ -1,0 +1,16 @@
+<header class="moar-home-header">
+    <a class="moar-brand" href="/moar-supplies" aria-label="Moar Supplies home">
+        <span class="moar-brand__mark" aria-hidden="true">MS</span>
+        <span><strong>Moar Supplies</strong><small>Custom stimulant workshop</small></span>
+    </a>
+    <nav class="moar-nav" aria-label="Moar Supplies navigation">
+        <a class="moar-nav__item @(CurrentPage == "Home" ? "moar-nav__item--active" : string.Empty)" href="/moar-supplies">Home</a>
+        <a class="moar-nav__item @(CurrentPage == "Database" ? "moar-nav__item--active" : string.Empty)" href="/moar-supplies/database">Database</a>
+        <a class="moar-nav__item @(CurrentPage == "Modify" ? "moar-nav__item--active" : string.Empty)" href="/moar-supplies/modify">Modify</a>
+    </nav>
+</header>
+
+@code {
+    [Parameter, EditorRequired]
+    public string CurrentPage { get; set; } = string.Empty;
+}

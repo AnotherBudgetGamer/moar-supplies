@@ -1,0 +1,47 @@
+{
+  "id": "baldur",
+  "enabled": true,
+  "identity": {
+    "name": "Baldur",
+    "shortName": "BLD-R",
+    "description": "A next-generation painkiller that overloads the body's endorphin receptors. The ensuing chemical wash creates an intense, euphoric illusion of total invulnerability. Codenamed 'Blind God', TerraGroup scientists nicknamed it after the Norse god who could not be harmed by any blade or blunt force. While under its long-lasting effects, the operator's stress levels flatline, allowing them to take devastating hits without a single flinch."
+  },
+  "baseItem": "morphine",
+  "uses": 1,
+  "tags": [
+    "combat",
+    "resilience",
+    "painkiller"
+  ],
+  "buffs": [
+    {
+      "effect": "stressResistance",
+      "value": 20,
+      "duration": 300,
+      "delay": 0
+    },
+    {
+      "effect": "vitality",
+      "value": 15,
+      "duration": 300,
+      "delay": 0
+    },
+    {
+      "effect": "concussion",
+      "duration": 60,
+      "delay": 0
+    },
+    {
+      "effect": "handsTremor",
+      "value": 0.25,
+      "duration": 60,
+      "delay": 0
+    }
+  ],
+  "trader": {
+    "enabled": true,
+    "trader": "prapor",
+    "loyaltyLevel": 1,
+    "price": 15000
+  }
+}

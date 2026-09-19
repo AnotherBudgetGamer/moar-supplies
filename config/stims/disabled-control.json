@@ -1,0 +1,30 @@
+{
+  "id": "disabled-control",
+  "enabled": false,
+  "identity": {
+    "name": "Disabled Control Stim",
+    "shortName": "OFF",
+    "description": "A valid definition used to confirm that disabled stims are not registered."
+  },
+  "baseItem": "propital",
+  "uses": 1,
+  "tags": [
+    "testing",
+    "control",
+    "disabled"
+  ],
+  "buffs": [
+    {
+      "effect": "maxStamina",
+      "value": 10,
+      "duration": 60,
+      "delay": 0
+    }
+  ],
+  "trader": {
+    "enabled": false,
+    "trader": "therapist",
+    "loyaltyLevel": 1,
+    "price": 1
+  }
+}
