@@ -1,3 +1,10 @@
 bin/Release/
 obj/Release/
 ReleaseZip/
+
+# Internal planning and release documentation (kept locally, never published)
+/MoarSupplies_Design.md
+/Milestone8_TestPlan.md
+/ReleaseChecklist.md
+/agent-notes.txt
+/notes/
