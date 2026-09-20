@@ -8,7 +8,7 @@ using SPTarkov.Server.Core.Models.Spt.Tables;
 namespace MoarSupplies.Services;
 
 /// <summary>
-/// Adds custom stims to a configured SPT trader's assort.
+/// Adds configured Moar Supplies stimulants to an SPT trader's assort.
 /// </summary>
 [Injectable(InjectionType.Singleton, 0)]
 public sealed class TraderService

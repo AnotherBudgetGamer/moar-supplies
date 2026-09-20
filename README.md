@@ -1,18 +1,18 @@
 # Moar Supplies
 
-**Moar Supplies** is a server mod for **SPT 4.1.2** that lets you create, tune, and sell custom stimulant items without working with Tarkov template IDs or SPT database structures.
+**Moar Supplies** is a server mod for **SPT 4.1.2** that lets you create, tune, and sell configurable stimulant items without working with T***** template IDs or SPT database structures.
 
 It includes a built-in web workshop for everyday editing and a clear JSON format for anyone who prefers to work directly with files. Define a stim's identity, base item, uses, effects, timing, price, and trader; Moar Supplies turns that friendly definition into a persistent in-game item.
 
-> **Version:** 0.5.0  
-> **SPT compatibility:** 4.1.2 (`~4.1.2`)  
+> **Version:** 0.5.1  
+> **SPT compatibility:** 4.1.x (tested with 4.1.2; `~4.1.2`)  
 > **License:** All Rights Reserved
 
 ![Moar Supplies stimulant editor](wwwroot/assets/stim-basics.png)
 
 ## What it does
 
-- Creates custom stimulants by cloning a supported vanilla consumable.
+- Creates configurable stimulants by cloning a supported vanilla consumable.
 - Uses readable names such as `propital`, `healthRate`, and `therapist` instead of raw SPT IDs.
 - Lets you add beneficial effects, tradeoffs, durations, and delayed effects.
 - Gives each definition stable internal IDs, so items already in a profile remain valid after a normal server restart.
@@ -23,13 +23,13 @@ It includes a built-in web workshop for everyday editing and a clear JSON format
 ## Install
 
 1. Install and launch **SPT 4.1.2** once.
-2. Download the Moar Supplies release archive and extract its contents into your SPT server's mod directory:
+2. Download the Moar Supplies release archive and extract it into your SPT installation directory. The archive already contains the required SPT folder structure:
 
    ```text
-   <Your SPT folder>/SPT_Data/Server/mods/MoarSupplies/
+   <Your SPT folder>/SPT_Runtime/user/mods/AnotherBudgetGamer-MoarSupplies/
    ```
 
-3. Confirm that the mod folder contains `CustomStims.dll`, `config/`, and `wwwroot/`.
+3. Confirm that the mod folder contains `MoarSupplies.dll`, `config/`, and `wwwroot/`.
 4. Start the SPT server. The server log should report that Moar Supplies loaded its configuration and registered its enabled stim definitions.
 5. Open the SPT server's web interface and select **Moar Supplies** from the navigation. The workshop is available at `/moar-supplies`.
 
@@ -56,6 +56,19 @@ Saved definitions are written to `config/stims/`, one file per stim. The worksho
 ### A note about restarts
 
 Changes made in the workshop are saved immediately, but they are intentionally registered only during server startup. Restart the server after adding, editing, enabling, disabling, or deleting a stim. This keeps generated item IDs stable and protects stims already stored in a profile.
+
+## Update or uninstall
+
+Always close SPT before updating or removing Moar Supplies.
+
+To update, extract the new release archive into the SPT installation and allow it to replace the existing AnotherBudgetGamer-MoarSupplies folder. Your existing config/ folder contains your workshop changes and custom definitions, so back it up before updating if those definitions matter to you.
+
+To uninstall, first back up your SPT profile and remove or consume every Moar Supplies item from your PMC and scav inventories. Then delete this folder:
+
+`	ext
+<Your SPT folder>/SPT_Runtime/user/mods/AnotherBudgetGamer-MoarSupplies/
+``n
+Moar Supplies can be removed without leaving server files behind, but custom item templates may still be referenced by an existing profile. After removal, start the server and load the affected profile to verify it is healthy. If you encounter a profile problem, restore your backup; SPT profile repair is not guaranteed.
 
 ## Configure with JSON
 
@@ -88,7 +101,7 @@ Each file in `config/stims/` contains one definition. This is the full shape of 
   "identity": {
     "name": "Example Stim",
     "shortName": "EX-1",
-    "description": "A custom stimulant with a clear tradeoff."
+    "description": "A configurable stimulant with a clear tradeoff."
   },
   "baseItem": "propital",
   "uses": 1,
@@ -164,7 +177,7 @@ Verify the release contents were extracted without an extra nested folder, then 
 **My changes are saved but not in-game**  
 Restart the SPT server, then launch the game. Definitions are applied at server startup.
 
-**No custom stims registered after startup**  
+**No Moar Supplies stimulants registered after startup**
 Read the server log. Moar Supplies validates every definition before making any SPT database changes; a malformed JSON file, duplicate ID, unsupported base item/effect/trader, or invalid price can stop the entire set from loading. Set `"debug": true` in `config/settings.json` for more detailed logging.
 
 **A stim vanished after I changed it**  
@@ -199,7 +212,7 @@ The main code is organized as follows:
 
 ### Build locally
 
-The project expects the SPT runtime assemblies from a local SPT 4.1.2 installation. By default, it looks for them at `../spt-read-only/SPP-Tarkov/SPT_Runtime/` relative to the project. Point MSBuild at another runtime with `SptRuntimeDirectory` if needed.
+The project expects the SPT runtime assemblies from a local SPT 4.1.2 installation. By default, it looks for them at `../spt-read-only/SPP-T*****/SPT_Runtime/` relative to the project. Point MSBuild at another runtime with `SptRuntimeDirectory` if needed.
 
 ```powershell
 dotnet build
@@ -211,7 +224,21 @@ To use a different runtime location:
 dotnet build -p:SptRuntimeDirectory="C:\path\to\SPT_Runtime\"
 ```
 
-The project specification and release test checklist are available in [CustomStims_Design.md](CustomStims_Design.md) and [Milestone8_TestPlan.md](Milestone8_TestPlan.md).
+### Deploy locally
+
+`dotnet build -c Release` creates `ReleaseZip/AnotherBudgetGamer-MoarSupplies-0.5.1.zip`, ready to extract into an SPT installation. `Deploy.ps1` builds the same release and installs it locally at `user/mods/AnotherBudgetGamer-MoarSupplies`. It preserves an existing `config/` folder, so workshop changes and custom definitions are not overwritten.
+
+```powershell
+.\Deploy.ps1
+```
+
+Specify another runtime when needed:
+
+```powershell
+.\Deploy.ps1 -SptRuntimeDirectory "C:\path\to\SPT_Runtime"
+```
+
+The project specification and release test checklist are available in [MoarSupplies_Design.md](MoarSupplies_Design.md) and [Milestone8_TestPlan.md](Milestone8_TestPlan.md).
 
 ## Contributing and feedback
 

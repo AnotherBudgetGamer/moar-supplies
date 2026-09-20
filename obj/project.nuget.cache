@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "fOgq80ctjfI=",
+  "dgSpecHash": "AcJW79jmORE=",
   "success": true,
-  "projectFilePath": "F:\\repos\\moar-supplies-spt-mod\\CustomStims.csproj",
+  "projectFilePath": "F:\\repos\\moar-supplies\\MoarSupplies.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\dllrd\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.12\\microsoft.aspnetcore.app.internal.assets.10.0.12.nupkg.sha512"
   ],

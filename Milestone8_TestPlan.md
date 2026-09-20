@@ -1,6 +1,6 @@
 # Milestone 8 — Multi-definition and persistence test
 
-This test confirms that the generic registration path works for more than the original single-stim case.
+This test confirms that the multi-stimulant registration path works for more than the original single-stim case.
 
 ## Definitions under test
 
@@ -49,7 +49,7 @@ This test confirms that the generic registration path works for more than the or
 ## Profile persistence test
 
 1. Buy at least one of each enabled stim.
-2. Leave one or more custom stims in the PMC stash.
+2. Leave one or more Moar Supplies stimulants in the PMC stash.
 3. Exit the game and shut down the SPT server normally.
 4. Restart the server without changing the configuration.
 5. Load the same profile and confirm every retained custom stim is still present.

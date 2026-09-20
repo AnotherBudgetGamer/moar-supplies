@@ -10,39 +10,39 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property.EntryPointFilePath = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
-build_property.RootNamespace = CustomStims
-build_property.RootNamespace = CustomStims
-build_property.ProjectDir = F:\repos\moar-supplies-spt-mod\
+build_property.RootNamespace = MoarSupplies
+build_property.RootNamespace = MoarSupplies
+build_property.ProjectDir = F:\repos\moar-supplies\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.RazorLangVersion = 10.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = F:\repos\moar-supplies-spt-mod
+build_property.MSBuildProjectDirectory = F:\repos\moar-supplies
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 10.0
 build_property.EnableCodeStyleSeverity = 
 
-[F:/repos/moar-supplies-spt-mod/Web/Components/MoarNavigation.razor]
+[F:/repos/moar-supplies/Web/Components/MoarNavigation.razor]
 build_metadata.AdditionalFiles.TargetPath = V2ViXENvbXBvbmVudHNcTW9hck5hdmlnYXRpb24ucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[F:/repos/moar-supplies-spt-mod/Web/Layouts/MoarSuppliesLayout.razor]
+[F:/repos/moar-supplies/Web/Layouts/MoarSuppliesLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = V2ViXExheW91dHNcTW9hclN1cHBsaWVzTGF5b3V0LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[F:/repos/moar-supplies-spt-mod/Web/Pages/Dashboard.razor]
+[F:/repos/moar-supplies/Web/Pages/Dashboard.razor]
 build_metadata.AdditionalFiles.TargetPath = V2ViXFBhZ2VzXERhc2hib2FyZC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[F:/repos/moar-supplies-spt-mod/Web/Pages/Database.razor]
+[F:/repos/moar-supplies/Web/Pages/Database.razor]
 build_metadata.AdditionalFiles.TargetPath = V2ViXFBhZ2VzXERhdGFiYXNlLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[F:/repos/moar-supplies-spt-mod/Web/Pages/Modify.razor]
+[F:/repos/moar-supplies/Web/Pages/Modify.razor]
 build_metadata.AdditionalFiles.TargetPath = V2ViXFBhZ2VzXE1vZGlmeS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[F:/repos/moar-supplies-spt-mod/Web/_Imports.razor]
+[F:/repos/moar-supplies/Web/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = V2ViXF9JbXBvcnRzLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 

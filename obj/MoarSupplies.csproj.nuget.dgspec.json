@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "F:\\repos\\moar-supplies-spt-mod\\CustomStims.csproj": {}
+    "F:\\repos\\moar-supplies\\MoarSupplies.csproj": {}
   },
   "projects": {
-    "F:\\repos\\moar-supplies-spt-mod\\CustomStims.csproj": {
-      "version": "1.0.0",
+    "F:\\repos\\moar-supplies\\MoarSupplies.csproj": {
+      "version": "0.5.1",
       "restore": {
-        "projectUniqueName": "F:\\repos\\moar-supplies-spt-mod\\CustomStims.csproj",
-        "projectName": "CustomStims",
-        "projectPath": "F:\\repos\\moar-supplies-spt-mod\\CustomStims.csproj",
+        "projectUniqueName": "F:\\repos\\moar-supplies\\MoarSupplies.csproj",
+        "projectName": "MoarSupplies",
+        "projectPath": "F:\\repos\\moar-supplies\\MoarSupplies.csproj",
         "packagesPath": "C:\\Users\\dllrd\\.nuget\\packages\\",
-        "outputPath": "F:\\repos\\moar-supplies-spt-mod\\obj\\",
+        "outputPath": "F:\\repos\\moar-supplies\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

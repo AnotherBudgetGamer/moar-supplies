@@ -1,4 +1,4 @@
-# Custom Stims for SPT 4.1.2
+# Moar Supplies for SPT 4.1.2
 
 ## LLM-Oriented Design and Implementation Specification
 
@@ -14,12 +14,12 @@ rediscovering the architecture.
 
 # 1. Project Summary
 
-This project is an SPT server mod that provides a **generic framework
+This project is an SPT server mod that provides a **configurable system
 for creating custom consumable stimulants** from a user-friendly
 definition.
 
 The long-term goal is to expose a web UI where a user can create and
-edit custom stims without knowing:
+edit Moar Supplies stimulants without knowing:
 
 -   Tarkov template IDs
 -   SPT internal IDs
@@ -223,7 +223,7 @@ It demonstrates:
 -   client-side syringe texture replacement
 
 The server implementation should be studied for SPT API usage, but the
-architecture of this project should be more generic.
+architecture of this project should support arbitrary stimulant definitions.
 
 Cooler Stims has fixed code/configuration for five specific stims. This
 project must instead support an arbitrary number of definitions.
@@ -272,8 +272,8 @@ before generating code.
 Initial structure:
 
 ``` text
-CustomStims/
-├── CustomStims.csproj
+MoarSupplies/
+├── MoarSupplies.csproj
 ├── Mod.cs
 │
 ├── Models/
@@ -726,7 +726,7 @@ The key must be unique per custom stim.
 Example conceptual key:
 
 ``` text
-CustomStims_super-propital
+MoarSupplies_super-propital
 ```
 
 Do not use a hard-coded key for every generated stim.
@@ -963,14 +963,14 @@ Logging should be useful to someone debugging a mod installation.
 Example:
 
 ``` text
-[CustomStims] Loading configuration...
-[CustomStims] Found 1 stim definition.
-[CustomStims] Validating 'super-propital'...
-[CustomStims] Resolved base item 'propital'.
-[CustomStims] Creating item 'Super Propital'.
-[CustomStims] Registered 2 buffs.
-[CustomStims] Added 'Super Propital' to Therapist.
-[CustomStims] Successfully registered 1 custom stim.
+[MoarSupplies] Loading configuration...
+[MoarSupplies] Found 1 stim definition.
+[MoarSupplies] Validating 'super-propital'...
+[MoarSupplies] Resolved base item 'propital'.
+[MoarSupplies] Creating item 'Super Propital'.
+[MoarSupplies] Registered 2 buffs.
+[MoarSupplies] Added 'Super Propital' to Therapist.
+[MoarSupplies] Successfully registered 1 custom stim.
 ```
 
 Errors should include actionable information.
@@ -1034,7 +1034,7 @@ Implement in this order.
 Create:
 
 ``` text
-CustomStims.csproj
+MoarSupplies.csproj
 Mod.cs
 ```
 
@@ -1129,7 +1129,7 @@ Confirm that arbitrary list entries work.
 
 Create a second definition using a different base item.
 
-This is the critical genericity test.
+This is the critical arbitrary-definition test.
 
 If adding the second stim requires copying an entire method such as:
 
@@ -1144,7 +1144,7 @@ the architecture is wrong.
 The desired result is:
 
 ``` text
-one generic CreateStim(...)
+one shared CreateStim(...)
 +
 two JSON definitions
 =
@@ -1153,7 +1153,7 @@ two working stims
 
 ------------------------------------------------------------------------
 
-# 25. Genericity Test
+# 25. Arbitrary Definition Test
 
 The most important architectural test is this:
 
@@ -1184,7 +1184,7 @@ APEX, AEGIS, Propital+, or anything else.
 
 # 26. Relationship to Cooler Stims
 
-Cooler Stims currently represents a fixed set of custom stims.
+Cooler Stims currently represents a fixed set of predefined stimulants.
 
 Conceptually it does:
 
@@ -1349,7 +1349,7 @@ Before choosing the dependency approach, answer:
 
 1.  Is the current Consumables Galore source compatible with SPT 4.1.2?
 2.  Does its API expose the functionality needed by this project?
-3.  Can it accept the generic definitions we want?
+3.  Can it accept the arbitrary definitions we want?
 4.  Does relying on it constrain our schema?
 5.  Does it simplify item registration enough to justify the dependency?
 6.  What happens when Consumables Galore changes versions?
@@ -1495,11 +1495,11 @@ Do not generate the entire final project in one pass.
 Use the following as the initial instruction to a coding LLM:
 
 ``` text
-You are helping implement an SPT 4.1.2 server mod called CustomStims.
+You are helping implement an SPT 4.1.2 server mod called MoarSupplies.
 
 Read DESIGN.md completely before writing code.
 
-The project is a generic custom-stimulant framework. Users will eventually define
+The project is a configurable stimulant system. Users will eventually define
 stims through a friendly web UI, but the first implementation is server-side only.
 
 The first proof of concept must:
@@ -1510,7 +1510,7 @@ The first proof of concept must:
 4. Validate the configuration.
 5. Resolve a friendly base item name such as "propital" to its verified SPT item template.
 6. Clone/create one custom item.
-7. Register one or more generic stim buffs.
+7. Register one or more definition-based stim buffs.
 8. Optionally register the item with Therapist.
 9. Log each stage clearly.
 10. Work for arbitrary stim definitions without stim-specific methods.
@@ -1547,7 +1547,7 @@ Then make only the smallest change required for that milestone.
 Use this when asking the LLM to review implementation:
 
 ``` text
-Review the current CustomStims implementation against DESIGN.md.
+Review the current MoarSupplies implementation against DESIGN.md.
 
 Do not rewrite the project automatically.
 
@@ -1587,7 +1587,7 @@ Do not make changes until explicitly instructed.
 Use this pattern for later work:
 
 ``` text
-We need to add [FEATURE] to CustomStims.
+We need to add [FEATURE] to MoarSupplies.
 
 Read DESIGN.md and inspect the existing implementation first.
 
@@ -1604,7 +1604,7 @@ Determine:
 
 Explain the proposed change before coding.
 
-Keep the implementation generic so the feature applies to arbitrary stim
+Keep the implementation definition-driven so the feature applies to arbitrary stim
 definitions rather than a specific named stim.
 
 Do not expose SPT IDs in user configuration unless there is no reasonable
@@ -1700,7 +1700,7 @@ The first PoC is complete when all of the following are true:
 -   [ ] Friendly base-item names resolve correctly.
 -   [ ] One custom item can be cloned/created.
 -   [ ] The custom item is registered correctly.
--   [ ] At least one generic buff can be attached.
+-   [ ] At least one definition-based buff can be attached.
 -   [ ] The buff actually works in-game.
 -   [ ] Therapist registration works.
 -   [ ] A second stim can be added only by changing JSON.
@@ -1808,13 +1808,13 @@ These constraints should be treated as project-level requirements.
 ### Required
 
 -   Target SPT 4.1.2 for the initial implementation.
--   Generic definitions.
+-   Definition-based configuration.
 -   Friendly user-facing schema.
 -   Strongly typed configuration models.
 -   Validation before registration.
 -   Internal ID/effect resolution.
--   Generic item creation.
--   Generic buff creation.
+-   Definition-driven item creation.
+-   Definition-driven buff creation.
 -   Stable generated item identifiers.
 -   Clear logging.
 -   Incremental implementation.
@@ -1932,7 +1932,7 @@ This illustrates an important future principle:
 > inherited gameplay behavior.
 
 The first prototype should use a simple known-compatible stim base and
-avoid special cases until the generic path is proven.
+avoid special cases until the definition-driven path is proven.
 
 ------------------------------------------------------------------------
 
