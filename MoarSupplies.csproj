@@ -13,7 +13,7 @@
     <Version>0.5.1</Version>
     <OutputPath>bin\$(Configuration)\$(ModAuthor)-$(AssemblyName)\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <SptRuntimeDirectory Condition="'$(SptRuntimeDirectory)' == ''">$(MSBuildThisFileDirectory)..\spt-read-only\SPP-Tarkov\SPT_Runtime\</SptRuntimeDirectory>
+    <SptRuntimeDirectory Condition="'$(SptRuntimeDirectory)' == ''">$(MSBuildThisFileDirectory)..\..\SPP\SPP-Tarkov\SPT_Runtime\</SptRuntimeDirectory>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">

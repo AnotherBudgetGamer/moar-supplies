@@ -63,6 +63,7 @@
                                     {
                                         <article class="moar-effect-editor">
                                             <div class="moar-effect-editor__topline"><strong>@DisplayName(buff.Effect)</strong><button type="button" class="moar-icon-button" title="Remove effect" @onclick="() => RemoveEffect(buff)">×</button></div>
+                                            <p class="moar-effect-editor__description">@EffectHelp.Describe(buff.Effect)</p>
                                             <div class="moar-effect-fields">
                                                 @if (RequiresValue(buff.Effect)) { <label>Value <span class="moar-effect-unit--placeholder" aria-hidden="true">amount</span><input type="number" step="any" @bind="buff.Value" /></label> }
                                                 <label>Duration <span>seconds</span><input type="number" min="0" @bind="buff.Duration" /></label>

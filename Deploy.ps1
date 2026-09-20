@@ -1,12 +1,16 @@
 [CmdletBinding()]
 param(
-    [string] $SptRuntimeDirectory = (Join-Path $PSScriptRoot "..\spt-read-only\SPP-Tarkov\SPT_Runtime")
+    [string] $SptRuntimeDirectory = (Join-Path $PSScriptRoot "..\..\SPP\SPP-Tarkov\SPT_Runtime")
 )
 
 $ErrorActionPreference = "Stop"
 
 $projectPath = Join-Path $PSScriptRoot "MoarSupplies.csproj"
 $runtimePath = (Resolve-Path -LiteralPath $SptRuntimeDirectory).Path
+if (-not $runtimePath.EndsWith([System.IO.Path]::DirectorySeparatorChar))
+{
+    $runtimePath += [System.IO.Path]::DirectorySeparatorChar
+}
 $modDirectoryName = "AnotherBudgetGamer-MoarSupplies"
 $buildOutputPath = Join-Path $PSScriptRoot "bin\Release\$modDirectoryName"
 $destinationPath = Join-Path $runtimePath "user\mods\$modDirectoryName"
