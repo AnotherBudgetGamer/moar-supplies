@@ -238,8 +238,6 @@ Specify another runtime when needed:
 .\Deploy.ps1 -SptRuntimeDirectory "C:\path\to\SPT_Runtime"
 ```
 
-The project specification and release test checklist are available in [MoarSupplies_Design.md](MoarSupplies_Design.md) and [Milestone8_TestPlan.md](Milestone8_TestPlan.md).
-
 ## Contributing and feedback
 
 Bug reports and improvement ideas are welcome through this repository's GitHub Issues once the repository is public. When reporting a configuration problem, include the relevant stim JSON and the Moar Supplies portion of the SPT server log—without sharing personal profile data.
