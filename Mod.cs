@@ -14,7 +14,7 @@ public sealed class Mod : IModMetadata, IModBlazorMetadata
     public string Name { get; init; } = "MoarSupplies";
     public string Author { get; init; } = "AnotherBudgetGamer";
     public List<string>? Contributors { get; init; } = null;
-    public SemanticVersion Version { get; init; } = new("0.5.1");
+    public SemanticVersion Version { get; init; } = new("0.6.0");
     public SemanticVersionRange SptVersion { get; init; } = new("~4.1.2");
     public bool HasPrepatcher { get; init; } = false;
     public List<string>? Incompatibilities { get; init; } = null;
