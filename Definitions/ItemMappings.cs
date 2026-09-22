@@ -38,6 +38,34 @@ public static class ItemMappings
 
     public static bool TryGet(string baseItem, out BaseItemMapping mapping) =>
         SupportedItems.TryGetValue(baseItem, out mapping!);
+
+    private static readonly Dictionary<string, BaseItemMapping> SupportedDrinks = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["aquamari"] = new("5c0fa877d174af02a012e1cf"),
+        ["apple-juice"] = new("57513f07245977207e26a311"),
+        ["emergency-water-ration"] = new("60098b1705871270cd5352a1"),
+        ["grand-juice"] = new("57513f9324597720a7128161"),
+        ["hot-rod"] = new("5751496424597720a27126da"),
+        ["ice-green-tea"] = new("575062b524597720a31c09a1"),
+        ["kvass"] = new("5e8f3423fd7471236e6e3b64"),
+        ["max-energy"] = new("5751435d24597720a27126d1"),
+        ["milk"] = new("575146b724597720a27126d5"),
+        ["moonshine"] = new("5d1b376e86f774252519444e"),
+        ["pevko"] = new("62a09f32621468534a797acb"),
+        ["pineapple-juice"] = new("544fb62a4bdc2dfb738b4568"),
+        ["purified-water"] = new("5d1b33a686f7742523398398"),
+        ["ratcola"] = new("60b0f93284c20f0feb453da7"),
+        ["tarcola"] = new("57514643245977207f2c2d09"),
+        ["tarkovskaya-vodka"] = new("5d40407c86f774318526545a"),
+        ["vita-juice"] = new("57513fcc24597720a31c09a6"),
+        ["water"] = new("5448fee04bdc2dbc018b4567"),
+        ["whiskey"] = new("5d403f9186f7743cac3f229b")
+    };
+
+    public static bool IsSupportedDrink(string baseItem) => SupportedDrinks.ContainsKey(baseItem);
+
+    public static bool TryGetDrink(string baseItem, out BaseItemMapping mapping) =>
+        SupportedDrinks.TryGetValue(baseItem, out mapping!);
 }
 
 /// <summary>

@@ -1,0 +1,52 @@
+{
+  "id": "field-ration",
+  "enabled": true,
+  "identity": {
+    "name": "Field Ration Electrolyte Water",
+    "shortName": "FRW-60",
+    "description": "A sixty-unit bottle of electrolyte water prepared for long raids. It restores hydration immediately, gives a short burst of movement support, then leaves the user with a brief caffeine crash."
+  },
+  "baseItem": "water",
+  "resource": 60,
+  "nutrition": {
+    "hydration": 45,
+    "energy": 8
+  },
+  "tags": [
+    "test",
+    "hydration",
+    "endurance"
+  ],
+  "buffs": [
+    {
+      "effect": "maxStamina",
+      "value": 10,
+      "duration": 180,
+      "delay": 0
+    },
+    {
+      "effect": "staminaRate",
+      "value": 0.2,
+      "duration": 180,
+      "delay": 0
+    },
+    {
+      "effect": "handsTremor",
+      "value": 0.25,
+      "duration": 45,
+      "delay": 180
+    },
+    {
+      "effect": "energyRate",
+      "value": -0.5,
+      "duration": 90,
+      "delay": 180
+    }
+  ],
+  "trader": {
+    "enabled": true,
+    "trader": "therapist",
+    "loyaltyLevel": 1,
+    "price": 9000
+  }
+}

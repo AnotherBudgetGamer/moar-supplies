@@ -12,4 +12,7 @@ public sealed class BaseItemResolver
 {
     public bool TryResolve(string baseItem, out BaseItemMapping mapping) =>
         ItemMappings.TryGet(baseItem, out mapping);
+
+    public bool TryResolveDrink(string baseItem, out BaseItemMapping mapping) =>
+        ItemMappings.TryGetDrink(baseItem, out mapping);
 }

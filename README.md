@@ -141,6 +141,7 @@ Each file in `config/stims/` contains one definition. This is the full shape of 
 | `tags` | Optional workshop labels; up to eight, each 32 characters or fewer. They do not change gameplay. |
 | `buffs` | An array of effects. Each effect has a duration in seconds and may have a delayed start. |
 | `trader` | Optional availability. Set `enabled` to `false` to keep the item out of trader inventories. |
+| `trader.traderId` | Optional stable SPT trader ID. The workshop writes this automatically for every selection; it lets Moar Supplies target a modded trader reliably while retaining its friendly name. |
 
 Definitions are loaded as a complete set. If any definition is invalid, Moar Supplies reports the errors and registers no stims, preventing a partly updated setup.
 
@@ -148,9 +149,13 @@ Definitions are loaded as a complete set. If any definition is invalid, Moar Sup
 
 `2a2btg`, `3btg`, `adrenaline`, `ahf1m`, `etgchange`, `l1`, `meldonin`, `mule`, `obdolbos`, `obdolbos2`, `p22`, `perfotoran`, `pnb`, `propital`, `sj1`, `sj6`, `sj9`, `sj12`, `trimadol`, `xtg12`, `zagustin`, and `morphine`.
 
+### Supported drink base items
+
+`aquamari`, `apple-juice`, `emergency-water-ration`, `grand-juice`, `hot-rod`, `ice-green-tea`, `kvass`, `max-energy`, `milk`, `moonshine`, `pevko`, `pineapple-juice`, `purified-water`, `ratcola`, `tarcola`, `tarkovskaya-vodka`, `vita-juice`, `water`, and `whiskey`.
+
 ### Supported traders
 
-`therapist`, `prapor`, and `skier` are supported. Trader loyalty levels must be from 1 through 4, and a sale price must be greater than zero.
+All vanilla traders are supported: `therapist`, `prapor`, `skier`, `peacekeeper`, `mechanic`, `ragman`, `jaeger`, and `fence`. The workshop also discovers every enabled trader mod that has registered with SPT, displaying its friendly trader name while saving its stable internal ID. Trader loyalty levels must be from 1 through 4, and a sale price must be greater than zero.
 
 ### Supported effects
 

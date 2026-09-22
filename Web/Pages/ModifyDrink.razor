@@ -1,0 +1,72 @@
+@inject ConfigState ConfigState
+@inject ConfigStorage ConfigStorage
+@inject NavigationManager NavigationManager
+@inject TraderDirectory TraderDirectory
+
+@if (Draft is null)
+                {
+                    <div class="moar-database__empty"><strong>No drink selected</strong><p>Create a new drink, or choose one from the <a href="/moar-supplies/database">database</a>.</p></div>
+                }
+                else
+                {
+                    <div class="moar-modify__layout">
+                        <form class="moar-editor" @onsubmit:preventDefault>
+                            <section class="moar-editor__section">
+                                <div class="moar-editor__section-heading"><p class="moar-kicker">BASE DRINK</p><h2>Start with a vanilla drink</h2><p>The base supplies the in-game model, sound, and drinking behavior.</p></div>
+                                <div class="moar-form-grid"><label>Base drink<select @bind="Draft.BaseItem">@foreach (string item in BaseItems) { <option value="@item">@DisplayName(item)</option> }</select></label><label>Resource<input type="number" min="1" @bind="Draft.Resource" /></label><label>Hydration<input type="number" step="any" @bind="Draft.Nutrition.Hydration" /></label><label>Energy<input type="number" step="any" @bind="Draft.Nutrition.Energy" /></label></div>
+                            </section>
+                            <section class="moar-editor__section">
+                                <div class="moar-editor__section-heading"><p class="moar-kicker">IDENTITY</p><h2>What players see</h2></div>
+                                <div class="moar-form-grid"><label>Definition ID<input @bind="Draft.Id" placeholder="e.g. field-ration" /></label><label class="moar-status-field"><span class="moar-status-field__label">@(Draft.Enabled ? "Enabled" : "Disabled")</span><span class="moar-status-toggle"><input type="checkbox" @bind="Draft.Enabled" /><span class="moar-status-toggle__control" aria-hidden="true"></span><span class="moar-status-toggle__description">Include this definition</span></span></label><label>Display name<input @bind="Draft.Identity.Name" /></label><label>Short name<input @bind="Draft.Identity.ShortName" /></label><label class="moar-description-field moar-form-grid__full">Description<textarea rows="4" @bind="Draft.Identity.Description"></textarea></label></div>
+                            </section>
+                            <section class="moar-editor__section">
+                                <div class="moar-editor__section-heading"><p class="moar-kicker">EFFECT PROFILE</p><h2>Timed effects and tradeoffs</h2><p>Nutrition applies immediately. These effects apply on their own timing.</p></div>
+                                <div class="moar-effect-editor-list">@foreach (BuffDefinition buff in Draft.Buffs) { <article class="moar-effect-editor"><div class="moar-effect-editor__topline"><strong>@DisplayName(buff.Effect)</strong><button type="button" class="moar-icon-button" title="Remove effect" @onclick="() => RemoveEffect(buff)">×</button></div><p class="moar-effect-editor__description">@EffectHelp.Describe(buff.Effect)</p><div class="moar-effect-fields">@if (RequiresValue(buff.Effect)) { <label>Value <input type="number" step="any" @bind="buff.Value" /></label> }<label>Duration <span>seconds</span><input type="number" min="0" @bind="buff.Duration" /></label><label>Delay <span>seconds</span><input type="number" min="0" @bind="buff.Delay" /></label></div></article> }</div>
+                                <button type="button" class="moar-add-effect" @onclick="ToggleEffectPicker"><span>+</span> Add an effect</button>
+                                @if (EffectPickerOpen) { <div class="moar-effect-picker" aria-label="Available effects"><p>Choose an effect to add</p><div>@foreach (string effect in AvailableEffects) { <button type="button" @onclick="() => AddEffect(effect)">@DisplayName(effect)</button> }</div></div> }
+                            </section>
+                            <section class="moar-editor__section"><div class="moar-editor__section-heading"><p class="moar-kicker">AVAILABILITY</p><h2>Place it in the world</h2></div><div class="moar-form-grid"><label class="moar-status-field"><span class="moar-status-field__label">@(Draft.Trader!.Enabled ? "Enabled" : "Disabled")</span><span class="moar-status-toggle"><input type="checkbox" @bind="Draft.Trader!.Enabled" /><span class="moar-status-toggle__control" aria-hidden="true"></span><span class="moar-status-toggle__description">Make this drink purchasable</span></span></label>@if (Draft.Trader!.Enabled) { <label>Trader<select value="@SelectedTraderId" @onchange="SelectTrader">@foreach (AvailableTrader trader in AvailableTraders) { <option value="@trader.Id">@trader.DisplayName</option> }</select></label><label>Loyalty level<select @bind="Draft.Trader!.LoyaltyLevel">@foreach (int level in Enumerable.Range(1, 4)) { <option value="@level">Level @level</option> }</select></label><label>Price<input type="number" min="1" @bind="Draft.Trader!.Price" /></label> }</div></section>
+                        </form>
+                        <aside class="moar-editor-preview" aria-label="Drink preview"><p class="moar-kicker">LIVE PREVIEW</p><h2>@Draft.Identity.Name</h2><span>@Draft.Identity.ShortName</span><p>@Draft.Identity.Description</p><dl><div><dt>Base drink</dt><dd>@DisplayName(Draft.BaseItem)</dd></div><div><dt>Resource</dt><dd>@Draft.Resource</dd></div><div><dt>Hydration</dt><dd>@Draft.Nutrition.Hydration</dd></div><div><dt>Energy</dt><dd>@Draft.Nutrition.Energy</dd></div><div><dt>Timed effects</dt><dd>@Draft.Buffs.Count</dd></div></dl><button type="button" class="moar-button" @onclick="SaveDraftAsync" disabled="@IsSaving">@(IsSaving ? "Saving…" : "Save drink")</button>@if (SaveErrors.Count > 0) { <div class="moar-save-message moar-save-message--error" role="alert"><strong>Could not save</strong><ul>@foreach (string error in SaveErrors) { <li>@error</li> }</ul></div> } else if (!string.IsNullOrWhiteSpace(SaveMessage)) { <p class="moar-save-message moar-save-message--success" role="status">@SaveMessage</p> }</aside>
+                    </div>
+                }
+
+@code {
+    [Parameter] public string? DrinkId { get; set; }
+    [Parameter] public bool CreateNew { get; set; }
+    private DrinkDefinition? Draft;
+    private bool IsCreating;
+    private bool EffectPickerOpen;
+    private bool IsSaving;
+    private string? SaveMessage;
+    private List<string> SaveErrors = [];
+    private static readonly string[] BaseItems = ["aquamari", "apple-juice", "emergency-water-ration", "grand-juice", "hot-rod", "ice-green-tea", "kvass", "max-energy", "milk", "moonshine", "pevko", "pineapple-juice", "purified-water", "ratcola", "tarcola", "tarkovskaya-vodka", "vita-juice", "water", "whiskey"];
+    private static readonly string[] AvailableEffects = ["aiming", "antidote", "assault", "attention", "bodyTemperature", "concussion", "damageModifier", "endurance", "energyRate", "handsTremor", "healthRate", "hydrationRate", "maxStamina", "painSuppression", "staminaRate", "stressResistance", "weightLimit"];
+    private IReadOnlyList<AvailableTrader> AvailableTraders => TraderDirectory.GetAvailableTraders();
+    private string SelectedTraderId => Draft?.Trader is null ? string.Empty : ResolveSelectedTraderId(Draft.Trader);
+    private string EditorTitle => Draft is null ? "Modify drink" : IsCreating ? "Create drink" : $"Modify {Draft.Identity.Name}";
+
+    protected override void OnParametersSet()
+    {
+        if (CreateNew && !IsCreating)
+        {
+            CreateDraft();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(DrinkId)) { if (!IsCreating) Draft = null; EffectPickerOpen = false; return; }
+        DrinkDefinition? source = ConfigState.Current?.Drinks.FirstOrDefault(drink => string.Equals(drink.Id, DrinkId, StringComparison.OrdinalIgnoreCase));
+        Draft = source is null ? null : Copy(source); IsCreating = false; EffectPickerOpen = false; SaveMessage = null; SaveErrors = [];
+    }
+    private void CreateDraft() { Draft = new DrinkDefinition { Enabled = true, BaseItem = BaseItems[0], Resource = 60, Trader = CreateDefaultTrader() }; IsCreating = true; EffectPickerOpen = false; SaveMessage = null; SaveErrors = []; }
+    private void ToggleEffectPicker() => EffectPickerOpen = !EffectPickerOpen;
+    private TraderDefinition CreateDefaultTrader() { AvailableTrader? trader = AvailableTraders.FirstOrDefault(candidate => string.Equals(candidate.Id, "54cb57776803fa99248b456e", StringComparison.OrdinalIgnoreCase)) ?? AvailableTraders.FirstOrDefault(); return trader is null ? new TraderDefinition { LoyaltyLevel = 1 } : new TraderDefinition { Trader = trader.DisplayName, TraderId = trader.Id, LoyaltyLevel = 1 }; }
+    private string ResolveSelectedTraderId(TraderDefinition trader) => !string.IsNullOrWhiteSpace(trader.TraderId) ? trader.TraderId : TraderDirectory.TryResolve(trader, out string traderId) ? traderId : string.Empty;
+    private void SelectTrader(ChangeEventArgs changeEvent) { if (Draft?.Trader is null || changeEvent.Value is not string traderId) return; AvailableTrader? trader = AvailableTraders.FirstOrDefault(candidate => string.Equals(candidate.Id, traderId, StringComparison.OrdinalIgnoreCase)); if (trader is not null) { Draft.Trader.Trader = trader.DisplayName; Draft.Trader.TraderId = trader.Id; } }
+    private void AddEffect(string effect) { Draft!.Buffs.Add(new BuffDefinition { Effect = effect, Value = RequiresValue(effect) ? 0 : null, Duration = 60 }); EffectPickerOpen = false; }
+    private void RemoveEffect(BuffDefinition buff) => Draft!.Buffs.Remove(buff);
+    private async Task SaveDraftAsync() { if (Draft is null || IsSaving) return; IsSaving = true; SaveMessage = null; SaveErrors = []; ConfigSaveResult result = await ConfigStorage.SaveDrinkAsync(Draft, IsCreating ? null : DrinkId, CancellationToken.None); IsSaving = false; SaveErrors = result.Errors.ToList(); if (result.Succeeded) { IsCreating = false; DrinkId = Draft.Id; SaveMessage = "Saved to config/drinks. Restart the SPT server to apply this definition in-game."; } }
+    private static bool RequiresValue(string effect) => !BuffMappings.TryGet(effect, out BuffMapping mapping) || mapping.RequiresValue;
+    private static string DisplayName(string value) => System.Text.RegularExpressions.Regex.Replace(value.Replace('-', ' '), "(?<!^)([A-Z])", " $1");
+    private static DrinkDefinition Copy(DrinkDefinition source) => new() { Id = source.Id, Enabled = source.Enabled, BaseItem = source.BaseItem, Resource = source.Resource, Nutrition = new DrinkNutrition { Hydration = source.Nutrition.Hydration, Energy = source.Nutrition.Energy }, Tags = [.. source.Tags], Identity = new StimIdentity { Name = source.Identity.Name, ShortName = source.Identity.ShortName, Description = source.Identity.Description }, Buffs = source.Buffs.Select(buff => new BuffDefinition { Effect = buff.Effect, Value = buff.Value, Duration = buff.Duration, Delay = buff.Delay }).ToList(), Trader = source.Trader is null ? new TraderDefinition() : new TraderDefinition { Enabled = source.Trader.Enabled, Trader = source.Trader.Trader, TraderId = source.Trader.TraderId, LoyaltyLevel = source.Trader.LoyaltyLevel, Price = source.Trader.Price } };
+}

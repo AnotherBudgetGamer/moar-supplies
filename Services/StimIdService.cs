@@ -12,6 +12,7 @@ namespace MoarSupplies.Services;
 public sealed class StimIdService
 {
     private const string ItemIdNamespace = "com.anotherbudgetgamer.moarsupplies:item:";
+    private const string DrinkItemIdNamespace = "com.anotherbudgetgamer.moarsupplies:drink:item:";
     private const string TraderAssortIdNamespace = "com.anotherbudgetgamer.moarsupplies:assort:";
     private const string BuffKeyPrefix = "MoarSupplies_";
 
@@ -20,6 +21,15 @@ public sealed class StimIdService
         string itemTemplateId = CreateMongoId(ItemIdNamespace + stimId);
         string traderAssortId = CreateMongoId(TraderAssortIdNamespace + stimId);
         string buffKey = BuffKeyPrefix + stimId;
+
+        return new StimRegistrationIds(itemTemplateId, buffKey, traderAssortId);
+    }
+
+    public StimRegistrationIds CreateDrink(string drinkId)
+    {
+        string itemTemplateId = CreateMongoId(DrinkItemIdNamespace + drinkId);
+        string traderAssortId = CreateMongoId(TraderAssortIdNamespace + "drink:" + drinkId);
+        string buffKey = BuffKeyPrefix + "Drink_" + drinkId;
 
         return new StimRegistrationIds(itemTemplateId, buffKey, traderAssortId);
     }

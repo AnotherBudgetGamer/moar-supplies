@@ -4,8 +4,9 @@
 @inject ConfigState ConfigState
 @inject ConfigStorage ConfigStorage
 @inject NavigationManager NavigationManager
+@inject TraderDirectory TraderDirectory
 
-<PageTitle>Modify Stimulant - Moar Supplies</PageTitle>
+<PageTitle>Modify Supplies - Moar Supplies</PageTitle>
 
 <MoarSuppliesLayout>
     <main class="moar-home">
@@ -15,21 +16,26 @@
             <section class="moar-modify" aria-labelledby="moar-modify-title">
                 <div class="moar-modify__heading">
                     <div>
-                        <p class="moar-kicker">MODIFY WORKSPACE</p>
-                        <h1 id="moar-modify-title">@EditorTitle</h1>
-                        <p>Shape a stimulant with friendly controls. Saved definitions are applied the next time the SPT server starts.</p>
+                        <p class="moar-kicker">@WorkspaceKicker</p>
+                        <h1 id="moar-modify-title">@WorkspaceTitle</h1>
+                        <p>@WorkspaceDescription</p>
                     </div>
                     <div class="moar-modify__actions">
-                        <button type="button" class="moar-add-stim" @onclick="CreateDraft"><span aria-hidden="true">+</span> Add Stim</button>
-                        <span class="moar-prototype-badge">One file per stim</span>
+                        <button type="button" class="moar-add-stim" @onclick="OpenStimCreator"><span aria-hidden="true">+</span> Add Stim</button>
+                        <button type="button" class="moar-add-stim" @onclick="OpenDrinkCreator"><span aria-hidden="true">+</span> Add Drink</button>
+                        <span class="moar-prototype-badge">One file per definition</span>
                     </div>
                 </div>
 
-                @if (Draft is null)
+                @if (IsDrinkWorkspace)
+                {
+                    <ModifyDrink @key="DrinkId" DrinkId="@DrinkId" CreateNew="CreateNewDrink" />
+                }
+                else if (Draft is null)
                 {
                     <div class="moar-database__empty">
                         <strong>No definition selected</strong>
-                        <p>Choose a stim from the <a href="/moar-supplies/database">database</a>, or use <strong>Add Stim</strong> to start a new one.</p>
+                        <p>Choose a supply from the <a href="/moar-supplies/database">database</a>, or use the creation options above to start a new one.</p>
                     </div>
                 }
                 else
@@ -89,7 +95,7 @@
                                         <label class="moar-status-field"><span class="moar-status-field__label">@(Draft.Trader!.Enabled ? "Enabled" : "Disabled")</span><span class="moar-status-toggle"><input type="checkbox" @bind="Draft.Trader!.Enabled" /><span class="moar-status-toggle__control" aria-hidden="true"></span><span class="moar-status-toggle__description">Make this stim purchasable</span></span></label>
                                         @if (Draft.Trader!.Enabled)
                                         {
-                                            <label>Trader<select @bind="Draft.Trader!.Trader">@foreach (string trader in Traders) { <option value="@trader">@DisplayName(trader)</option> }</select></label>
+                                            <label>Trader<select value="@SelectedTraderId" @onchange="SelectTrader">@foreach (AvailableTrader trader in AvailableTraders) { <option value="@trader.Id">@trader.DisplayName</option> }</select></label>
                                             <label>Loyalty level<select @bind="Draft.Trader!.LoyaltyLevel">@foreach (int level in Enumerable.Range(1, 4)) { <option value="@level">Level @level</option> }</select></label>
                                             <label>Price<input type="number" min="1" placeholder="Roubles" @bind="Draft.Trader!.Price" /></label>
                                         }
@@ -142,7 +148,10 @@
 
 @code {
     [SupplyParameterFromQuery(Name = "stim")] public string? StimId { get; set; }
+    [SupplyParameterFromQuery(Name = "drink")] public string? DrinkId { get; set; }
     private StimDefinition? Draft;
+    private bool IsDrinkWorkspace;
+    private bool CreateNewDrink;
     private bool IsCreating;
     private bool EffectPickerOpen;
     private bool IsSaving;
@@ -152,14 +161,35 @@
     private List<string> SaveErrors = [];
     private List<string> DeleteErrors = [];
     private static readonly string[] BaseItems = ["2a2btg", "3btg", "adrenaline", "ahf1m", "etgchange", "l1", "meldonin", "mule", "obdolbos", "obdolbos2", "p22", "perfotoran", "pnb", "propital", "sj1", "sj6", "sj9", "sj12", "trimadol", "xtg12", "zagustin", "morphine"];
-    private static readonly string[] Traders = ["therapist", "prapor", "skier"];
     private static readonly string[] AvailableEffects = ["aiming", "antidote", "assault", "attachedLauncher", "attention", "bodyTemperature", "charisma", "concussion", "covertMovement", "crafting", "damageModifier", "dmr", "endurance", "energyRate", "fieldMedicine", "firstAid", "fracture", "frostbite", "handsTremor", "health", "healthRate", "heavyBleeding", "heavyVests", "hearingDistance", "hideoutManagement", "hmg", "hydrationRate", "immunity", "intellect", "launcher", "lightBleeding", "lightVests", "lmg", "lockpicking", "magDrills", "maxStamina", "meleeDamage", "memory", "metabolism", "nightOps", "painSuppression", "perception", "pistol", "proneMovement", "quantumTunnelling", "recoilControl", "removeAllBloodLosses", "revolver", "search", "shotgun", "silentOps", "skillHealth", "smg", "sniper", "sniping", "sprintInertia", "staminaRate", "strength", "stressResistance", "surgery", "throwingStrength", "troubleshooting", "tunnelVision", "unknownToxin", "vitality", "weaponErgonomics", "weaponSpread", "weaponSwapSpeed", "weaponTreatment", "weightLimit", "zombieInfection"];
+    private IReadOnlyList<AvailableTrader> AvailableTraders => TraderDirectory.GetAvailableTraders();
+    private string SelectedTraderId => Draft?.Trader is null ? string.Empty : ResolveSelectedTraderId(Draft.Trader);
+    private bool IsGenericWorkspace => !IsDrinkWorkspace && string.IsNullOrWhiteSpace(StimId) && !IsCreating;
+    private string WorkspaceKicker => IsGenericWorkspace ? "SUPPLIES WORKSPACE" : IsDrinkWorkspace ? "DRINK WORKSPACE" : "STIM WORKSPACE";
+    private string WorkspaceDescription => IsGenericWorkspace
+        ? "Choose a supply to create or edit, then customize it for your raid. Saved definitions are applied the next time the SPT server starts."
+        : IsDrinkWorkspace
+            ? "Build a drink from a familiar vanilla base. Saved definitions are applied the next time the SPT server starts."
+            : "Shape a stimulant with friendly controls. Saved definitions are applied the next time the SPT server starts.";
     private string EditorTitle => Draft is null
-        ? "Modify stimulant"
+        ? "Modify Supplies"
         : IsCreating ? "Create stimulant" : $"Modify {Draft.Identity.Name}";
+    private string WorkspaceTitle => IsDrinkWorkspace
+        ? CreateNewDrink ? "Create drink" : string.IsNullOrWhiteSpace(DrinkId) ? "Modify drink" : "Modify drink"
+        : EditorTitle;
 
     protected override void OnParametersSet()
     {
+        if (!string.IsNullOrWhiteSpace(DrinkId))
+        {
+            IsDrinkWorkspace = true;
+            CreateNewDrink = false;
+            Draft = null;
+            return;
+        }
+
+        IsDrinkWorkspace = false;
+        CreateNewDrink = false;
         if (string.IsNullOrWhiteSpace(StimId))
         {
             if (!IsCreating)
@@ -186,7 +216,7 @@
             Enabled = true,
             BaseItem = BaseItems[0],
             Uses = 1,
-            Trader = new TraderDefinition { Trader = Traders[0], LoyaltyLevel = 1 }
+            Trader = CreateDefaultTrader()
         };
         IsCreating = true;
         EffectPickerOpen = false;
@@ -194,7 +224,55 @@
         SaveErrors = [];
     }
 
+    private void OpenStimCreator()
+    {
+        IsDrinkWorkspace = false;
+        CreateNewDrink = false;
+        CreateDraft();
+    }
+
+    private void OpenDrinkCreator()
+    {
+        Draft = null;
+        IsDrinkWorkspace = true;
+        CreateNewDrink = true;
+    }
+
     private void ToggleEffectPicker() => EffectPickerOpen = !EffectPickerOpen;
+    private TraderDefinition CreateDefaultTrader()
+    {
+        AvailableTrader? defaultTrader = AvailableTraders.FirstOrDefault(trader => string.Equals(trader.Id, "54cb57776803fa99248b456e", StringComparison.OrdinalIgnoreCase))
+            ?? AvailableTraders.FirstOrDefault();
+
+        return defaultTrader is null
+            ? new TraderDefinition { LoyaltyLevel = 1 }
+            : new TraderDefinition { Trader = defaultTrader.DisplayName, TraderId = defaultTrader.Id, LoyaltyLevel = 1 };
+    }
+
+    private string ResolveSelectedTraderId(TraderDefinition trader)
+    {
+        if (!string.IsNullOrWhiteSpace(trader.TraderId))
+        {
+            return trader.TraderId;
+        }
+
+        return TraderDirectory.TryResolve(trader, out string traderId) ? traderId : string.Empty;
+    }
+
+    private void SelectTrader(ChangeEventArgs changeEvent)
+    {
+        if (Draft?.Trader is null || changeEvent.Value is not string traderId)
+        {
+            return;
+        }
+
+        AvailableTrader? selection = AvailableTraders.FirstOrDefault(trader => string.Equals(trader.Id, traderId, StringComparison.OrdinalIgnoreCase));
+        if (selection is not null)
+        {
+            Draft.Trader.Trader = selection.DisplayName;
+            Draft.Trader.TraderId = selection.Id;
+        }
+    }
     private void AddEffect(string effect) { Draft!.Buffs.Add(new BuffDefinition { Effect = effect, Value = RequiresValue(effect) ? 0 : null, Duration = 60 }); EffectPickerOpen = false; }
     private void RemoveEffect(BuffDefinition buff) => Draft!.Buffs.Remove(buff);
     private void OpenDeleteConfirmation() { DeleteErrors = []; DeleteConfirmationOpen = true; }
@@ -250,6 +328,6 @@
         Id = source.Id, Enabled = source.Enabled, BaseItem = source.BaseItem, Uses = source.Uses, Tags = [.. source.Tags],
         Identity = new StimIdentity { Name = source.Identity.Name, ShortName = source.Identity.ShortName, Description = source.Identity.Description },
         Buffs = source.Buffs.Select(buff => new BuffDefinition { Effect = buff.Effect, Value = buff.Value, Duration = buff.Duration, Delay = buff.Delay }).ToList(),
-        Trader = source.Trader is null ? new TraderDefinition() : new TraderDefinition { Enabled = source.Trader.Enabled, Trader = source.Trader.Trader, LoyaltyLevel = source.Trader.LoyaltyLevel, Price = source.Trader.Price }
+        Trader = source.Trader is null ? new TraderDefinition() : new TraderDefinition { Enabled = source.Trader.Enabled, Trader = source.Trader.Trader, TraderId = source.Trader.TraderId, LoyaltyLevel = source.Trader.LoyaltyLevel, Price = source.Trader.Price }
     };
 }

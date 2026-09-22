@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using MoarSupplies.Definitions;
 using MoarSupplies.Models;
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
@@ -19,43 +18,53 @@ public sealed class TraderService
     private readonly ILogger<TraderService> _logger;
     private readonly DebugSettings _debugSettings;
     private readonly TradersTable _tradersTable;
+    private readonly TraderDirectory _traderDirectory;
 
-    public TraderService(ILogger<TraderService> logger, DebugSettings debugSettings, TradersTable tradersTable)
+    public TraderService(ILogger<TraderService> logger, DebugSettings debugSettings, TradersTable tradersTable, TraderDirectory traderDirectory)
     {
         _logger = logger;
         _debugSettings = debugSettings;
         _tradersTable = tradersTable;
+        _traderDirectory = traderDirectory;
     }
 
     public bool Register(StimDefinition stim, StimRegistrationIds ids)
+        => Register(stim.Id, stim.Trader, ids, new UpdMedKit { HpResource = stim.Uses }, "stim");
+
+    public bool Register(DrinkDefinition drink, StimRegistrationIds ids)
+        => Register(drink.Id, drink.Trader, ids, new UpdResource { Value = drink.Resource }, "drink");
+
+    private bool Register(string definitionId, TraderDefinition? sale, StimRegistrationIds ids, object resource, string definitionType)
     {
-        TraderDefinition? sale = stim.Trader;
         if (sale?.Enabled != true)
         {
             return true;
         }
 
-        if (!TraderMappings.TryGet(sale.Trader, out TraderMapping traderMapping))
+        if (!_traderDirectory.TryResolve(sale, out string traderId))
         {
             _logger.LogError(
-                "[MoarSupplies] Could not resolve trader '{TraderName}' for stim '{StimId}'.",
+                "[MoarSupplies] Could not resolve trader '{TraderName}' ({TraderId}) for {DefinitionType} '{DefinitionId}'.",
                 sale.Trader,
-                stim.Id);
+                sale.TraderId ?? "legacy selection",
+                definitionType,
+                definitionId);
             return false;
         }
 
         Trader? trader;
         try
         {
-            trader = _tradersTable.GetTrader(traderMapping.TraderId);
+            trader = _tradersTable.GetTrader(traderId);
         }
         catch (Exception exception)
         {
             _logger.LogError(
-                "[MoarSupplies] Could not load trader '{TraderName}' ({TraderId}) for stim '{StimId}': {Message}",
+                "[MoarSupplies] Could not load trader '{TraderName}' ({TraderId}) for {DefinitionType} '{DefinitionId}': {Message}",
                 sale.Trader,
-                traderMapping.TraderId,
-                stim.Id,
+                traderId,
+                definitionType,
+                definitionId,
                 exception.Message);
             return false;
         }
@@ -63,10 +72,11 @@ public sealed class TraderService
         if (trader is null)
         {
             _logger.LogError(
-                "[MoarSupplies] Trader '{TraderName}' ({TraderId}) was not found for stim '{StimId}'.",
+                "[MoarSupplies] Trader '{TraderName}' ({TraderId}) was not found for {DefinitionType} '{DefinitionId}'.",
                 sale.Trader,
-                traderMapping.TraderId,
-                stim.Id);
+                traderId,
+                definitionType,
+                definitionId);
             return false;
         }
 
@@ -75,9 +85,10 @@ public sealed class TraderService
             || trader.Assort.LoyalLevelItems.ContainsKey(ids.TraderAssortId))
         {
             _logger.LogError(
-                "[MoarSupplies] Generated assort ID '{AssortId}' for stim '{StimId}' is already registered with trader '{TraderName}'.",
+                "[MoarSupplies] Generated assort ID '{AssortId}' for {DefinitionType} '{DefinitionId}' is already registered with trader '{TraderName}'.",
                 ids.TraderAssortId,
-                stim.Id,
+                definitionType,
+                definitionId,
                 sale.Trader);
             return false;
         }
@@ -92,10 +103,8 @@ public sealed class TraderService
             {
                 UnlimitedCount = true,
                 StackObjectsCount = 9999999,
-                MedKit = new UpdMedKit
-                {
-                    HpResource = stim.Uses
-                }
+                MedKit = resource as UpdMedKit,
+                Resource = resource as UpdResource
             }
         };
 
@@ -117,8 +126,9 @@ public sealed class TraderService
         if (_debugSettings.Enabled)
         {
             _logger.LogInformation(
-                "[MoarSupplies] Added stim '{StimId}' to trader '{TraderName}' at loyalty level {LoyaltyLevel} for {Price} roubles (assort ID '{AssortId}').",
-                stim.Id,
+                "[MoarSupplies] Added {DefinitionType} '{DefinitionId}' to trader '{TraderName}' at loyalty level {LoyaltyLevel} for {Price} roubles (assort ID '{AssortId}').",
+                definitionType,
+                definitionId,
                 sale.Trader,
                 sale.LoyaltyLevel,
                 sale.Price,

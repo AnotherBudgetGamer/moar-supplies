@@ -16,6 +16,7 @@ public sealed class ConfigStorage
     private const string ConfigDirectoryName = "config";
     private const string SettingsFileName = "settings.json";
     private const string StimDirectoryName = "stims";
+    private const string DrinkDirectoryName = "drinks";
     private const string LegacyFileName = "stims.json";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -42,8 +43,12 @@ public sealed class ConfigStorage
         string[] definitionPaths = Directory.Exists(stimDirectory)
             ? Directory.GetFiles(stimDirectory, "*.json", SearchOption.TopDirectoryOnly)
             : [];
+        string drinkDirectory = Path.Combine(configDirectory, DrinkDirectoryName);
+        string[] drinkDefinitionPaths = Directory.Exists(drinkDirectory)
+            ? Directory.GetFiles(drinkDirectory, "*.json", SearchOption.TopDirectoryOnly)
+            : [];
 
-        if (definitionPaths.Length == 0)
+        if (definitionPaths.Length == 0 && drinkDefinitionPaths.Length == 0)
         {
             string legacyPath = Path.Combine(configDirectory, LegacyFileName);
             if (!File.Exists(legacyPath))
@@ -74,7 +79,18 @@ public sealed class ConfigStorage
             stims.Add(stim);
         }
 
-        return new ConfigLoadResult(new ModConfig { Version = settings.Version, Debug = settings.Debug, Stims = stims }, UsesLegacyFormat: false, stimDirectory);
+        List<DrinkDefinition> drinks = [];
+        if (drinkDefinitionPaths.Length > 0)
+        {
+            foreach (string definitionPath in drinkDefinitionPaths.OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
+            {
+                DrinkDefinition? drink = await DeserializeAsync<DrinkDefinition>(definitionPath, cancellationToken);
+                if (drink is null) throw new InvalidDataException($"Drink definition '{definitionPath}' could not be deserialized.");
+                drinks.Add(drink);
+            }
+        }
+
+        return new ConfigLoadResult(new ModConfig { Version = settings.Version, Debug = settings.Debug, Stims = stims, Drinks = drinks }, UsesLegacyFormat: false, configDirectory);
     }
 
     public async Task<ConfigSaveResult> SaveAsync(StimDefinition definition, string? originalId, CancellationToken cancellationToken)
@@ -90,7 +106,7 @@ public sealed class ConfigStorage
             .ToList();
         updatedStims.Add(definition);
 
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = updatedStims };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = updatedStims, Drinks = current.Drinks };
         IReadOnlyList<string> validationErrors = _configValidator.Validate(updatedConfig);
         if (validationErrors.Count > 0)
         {
@@ -111,6 +127,36 @@ public sealed class ConfigStorage
         return ConfigSaveResult.Success();
     }
 
+    public async Task<ConfigSaveResult> SaveDrinkAsync(DrinkDefinition definition, string? originalId, CancellationToken cancellationToken)
+    {
+        ModConfig? current = _configState.Current;
+        if (current is null) return ConfigSaveResult.Failure("A valid configuration must be loaded before a definition can be saved.");
+
+        List<DrinkDefinition> updatedDrinks = current.Drinks.Where(drink => !string.Equals(drink.Id, originalId, StringComparison.OrdinalIgnoreCase)).ToList();
+        updatedDrinks.Add(definition);
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = updatedDrinks };
+        IReadOnlyList<string> validationErrors = _configValidator.Validate(updatedConfig);
+        if (validationErrors.Count > 0) return ConfigSaveResult.Failure(validationErrors);
+
+        try
+        {
+            await WriteSplitConfigurationAsync(updatedConfig, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(originalId) && !string.Equals(originalId, definition.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                string oldPath = Path.Combine(GetConfigDirectory(), DrinkDirectoryName, $"{originalId}.json");
+                if (File.Exists(oldPath)) File.Delete(oldPath);
+            }
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+        {
+            _logger.LogError(exception, "[MoarSupplies] Could not save drink '{DrinkId}'.", definition.Id);
+            return ConfigSaveResult.Failure("The definition could not be written. Check the server log and that the config folder is writable.");
+        }
+
+        _configState.Current = updatedConfig;
+        return ConfigSaveResult.Success();
+    }
+
     public async Task<ConfigSaveResult> DeleteAsync(string stimId, CancellationToken cancellationToken)
     {
         ModConfig? current = _configState.Current;
@@ -123,7 +169,7 @@ public sealed class ConfigStorage
         List<StimDefinition> remainingStims = current.Stims
             .Where(stim => !string.Equals(stim.Id, definition.Id, StringComparison.OrdinalIgnoreCase))
             .ToList();
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = remainingStims };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = remainingStims, Drinks = current.Drinks };
 
         try
         {
@@ -132,10 +178,7 @@ public sealed class ConfigStorage
             Directory.CreateDirectory(stimDirectory);
 
             await WriteJsonAtomicallyAsync(Path.Combine(configDirectory, SettingsFileName), new ModSettings { Version = updatedConfig.Version, Debug = updatedConfig.Debug }, cancellationToken);
-            foreach (StimDefinition stim in remainingStims)
-            {
-                await WriteJsonAtomicallyAsync(Path.Combine(stimDirectory, $"{stim.Id}.json"), stim, cancellationToken);
-            }
+            await WriteSplitConfigurationAsync(updatedConfig, cancellationToken);
 
             string definitionPath = Path.Combine(stimDirectory, $"{definition.Id}.json");
             if (File.Exists(definitionPath))
@@ -162,6 +205,17 @@ public sealed class ConfigStorage
 
     private async Task WriteSplitConfigurationAsync(ModConfig config, string? originalId, CancellationToken cancellationToken)
     {
+        await WriteSplitConfigurationAsync(config, cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(originalId) && config.Stims.Count > 0 && !string.Equals(originalId, config.Stims.Last().Id, StringComparison.OrdinalIgnoreCase))
+        {
+            string oldDefinitionPath = Path.Combine(GetConfigDirectory(), StimDirectoryName, $"{originalId}.json");
+            if (File.Exists(oldDefinitionPath)) File.Delete(oldDefinitionPath);
+        }
+    }
+
+    private async Task WriteSplitConfigurationAsync(ModConfig config, CancellationToken cancellationToken)
+    {
         string configDirectory = GetConfigDirectory();
         string stimDirectory = Path.Combine(configDirectory, StimDirectoryName);
         Directory.CreateDirectory(stimDirectory);
@@ -173,14 +227,11 @@ public sealed class ConfigStorage
         {
             await WriteJsonAtomicallyAsync(Path.Combine(stimDirectory, $"{stim.Id}.json"), stim, cancellationToken);
         }
-
-        if (!string.IsNullOrWhiteSpace(originalId) && !string.Equals(originalId, config.Stims.Last().Id, StringComparison.OrdinalIgnoreCase))
+        string drinkDirectory = Path.Combine(configDirectory, DrinkDirectoryName);
+        Directory.CreateDirectory(drinkDirectory);
+        foreach (DrinkDefinition drink in config.Drinks)
         {
-            string oldDefinitionPath = Path.Combine(stimDirectory, $"{originalId}.json");
-            if (File.Exists(oldDefinitionPath))
-            {
-                File.Delete(oldDefinitionPath);
-            }
+            await WriteJsonAtomicallyAsync(Path.Combine(drinkDirectory, $"{drink.Id}.json"), drink, cancellationToken);
         }
     }
 

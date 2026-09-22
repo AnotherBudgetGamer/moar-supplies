@@ -8,4 +8,5 @@ public sealed class ModConfig
     public int Version { get; set; }
     public bool Debug { get; set; }
     public List<StimDefinition> Stims { get; set; } = [];
+    public List<DrinkDefinition> Drinks { get; set; } = [];
 }
