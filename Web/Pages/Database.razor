@@ -3,7 +3,7 @@
 @layout BaseMudBlazorLayout
 @inject ConfigState ConfigState
 
-<PageTitle>Stimulant Database - Moar Supplies</PageTitle>
+<PageTitle>Supply Database - Moar Supplies</PageTitle>
 
 <MoarSuppliesLayout>
     <main class="moar-home">
@@ -14,12 +14,12 @@
                 <div class="moar-database__heading">
                     <div>
                         <p class="moar-kicker">CURRENT CONFIGURATION</p>
-                        <h1 id="moar-database-title">Stimulant database</h1>
-                        <p>Browse every configured stim. Open an entry to inspect its effects, uses, and optional trader availability.</p>
+                        <h1 id="moar-database-title">Supply database</h1>
+                        <p>Browse configured stims and drinks. Open an entry to inspect its effects, resource, and optional trader availability.</p>
                     </div>
                     @if (Config is not null)
                     {
-                        <span class="moar-database__count">@Config.Stims.Count definition@(Config.Stims.Count == 1 ? string.Empty : "s")</span>
+                        <span class="moar-database__count">@(Config.Stims.Count + Config.Drinks.Count) definition@(Config.Stims.Count + Config.Drinks.Count == 1 ? string.Empty : "s")</span>
                     }
                 </div>
 
@@ -30,16 +30,33 @@
                         <p>The database will populate after SPT loads a valid <code>config/stims.json</code>.</p>
                     </div>
                 }
-                else if (Config.Stims.Count == 0)
+                else if (Config.Stims.Count == 0 && Config.Drinks.Count == 0)
                 {
                     <div class="moar-database__empty">
-                        <strong>No stims are configured</strong>
-                        <p>Create your first Moar Supplies stimulant from the Modify workspace once it is available.</p>
+                        <strong>No supplies are configured</strong>
+                        <p>Create your first Moar Supplies stimulant or drink from the Modify workspace.</p>
                     </div>
                 }
                 else
                 {
-                    <ol class="moar-database-list">
+                    <div class="moar-database__groups">
+                        @if (Config.Drinks.Count > 0)
+                        {
+                        <section class="moar-database__group">
+                            <header class="moar-database__group-heading"><p class="moar-kicker">DRINKS</p><h2>Configured drinks</h2></header>
+                            <ol class="moar-database-list">
+                                @foreach (DrinkDefinition drink in Config.Drinks.OrderBy(drink => drink.Identity.Name, StringComparer.OrdinalIgnoreCase))
+                                {
+                                    <li><details class="moar-stim-entry"><summary><span class="moar-stim-entry__identity"><strong>@drink.Identity.Name</strong><small>@drink.Identity.ShortName</small></span><span class="moar-stim-entry__tags">@foreach (string tag in drink.Tags) { <small>@tag</small> }</span><span class="moar-stim-entry__description">@drink.Identity.Description</span><span class="moar-stim-entry__actions"><span class="moar-stim-entry__toggle" aria-hidden="true">View details</span><a class="moar-button moar-button--secondary" href="@($"/moar-supplies/modify?drink={Uri.EscapeDataString(drink.Id)}")" @onclick:stopPropagation>Edit definition</a></span></summary><div class="moar-stim-entry__details"><p class="moar-stim-entry__profile-kicker moar-kicker">DRINK PROFILE · @drink.Buffs.Count TIMED EFFECT@(drink.Buffs.Count == 1 ? string.Empty : "S")</p><div class="moar-stim-entry__facts"><span><small>Base drink</small><strong>@drink.BaseItem</strong></span><span><small>Resource</small><strong>@drink.Resource</strong></span><span><small>Hydration</small><strong>@drink.Nutrition.Hydration</strong></span><span><small>Energy</small><strong>@drink.Nutrition.Energy</strong></span><span><small>Availability</small><strong>@TraderLabel(drink.Trader)</strong></span></div></div></details></li>
+                                }
+                            </ol>
+                        </section>
+                        }
+                        @if (Config.Stims.Count > 0)
+                        {
+                        <section class="moar-database__group">
+                            <header class="moar-database__group-heading"><p class="moar-kicker">STIMS</p><h2>Configured stims</h2></header>
+                            <ol class="moar-database-list">
                         @foreach (StimDefinition stim in Config.Stims.OrderBy(stim => stim.Identity.Name, StringComparer.OrdinalIgnoreCase))
                         {
                             List<BuffDefinition> buffs = stim.Buffs.Where(buff => !IsDebuff(buff)).ToList();
@@ -106,7 +123,10 @@
                                 </details>
                             </li>
                         }
-                    </ol>
+                            </ol>
+                        </section>
+                        }
+                    </div>
                 }
             </section>
         </section>

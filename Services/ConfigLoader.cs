@@ -9,7 +9,7 @@ namespace MoarSupplies.Services;
 /// <summary>
 /// Loads the user-facing configuration after SPT has constructed its dependency-injection container.
 /// </summary>
-[Injectable(InjectionType.Singleton, 0)]
+[Injectable(InjectionType.Singleton, OnLoadOrder.TraderRegistration + 1)]
 public sealed class ConfigLoader : IOnLoad
 {
     private readonly ILogger<ConfigLoader> _logger;
@@ -18,6 +18,7 @@ public sealed class ConfigLoader : IOnLoad
     private readonly ConfigState _configState;
     private readonly ConfigStorage _configStorage;
     private readonly StimService _stimService;
+    private readonly DrinkService _drinkService;
 
     public ConfigLoader(
         ILogger<ConfigLoader> logger,
@@ -25,7 +26,8 @@ public sealed class ConfigLoader : IOnLoad
         DebugSettings debugSettings,
         ConfigState configState,
         ConfigStorage configStorage,
-        StimService stimService)
+        StimService stimService,
+        DrinkService drinkService)
     {
         _logger = logger;
         _configValidator = configValidator;
@@ -33,6 +35,7 @@ public sealed class ConfigLoader : IOnLoad
         _configState = configState;
         _configStorage = configStorage;
         _stimService = stimService;
+        _drinkService = drinkService;
     }
 
     public async Task OnLoadAsync(CancellationToken cancellationToken)
@@ -61,7 +64,7 @@ public sealed class ConfigLoader : IOnLoad
         IReadOnlyList<string> validationErrors = _configValidator.Validate(config);
         if (validationErrors.Count > 0)
         {
-            _logger.LogError("[MoarSupplies] Error loading {ErrorCount} stim definition validation error(s). No stims will be registered.", validationErrors.Count);
+            _logger.LogError("[MoarSupplies] Error loading {ErrorCount} definition validation error(s). No stims or drinks will be registered.", validationErrors.Count);
 
             if (_debugSettings.Enabled)
             {
@@ -69,6 +72,10 @@ public sealed class ConfigLoader : IOnLoad
                 {
                     _logger.LogError("[MoarSupplies] {ValidationError}", error);
                 }
+
+                _logger.LogError(
+                    "[MoarSupplies] Recovery: delete or correct the invalid definition record identified above in {ConfigPath}, then restart the SPT server.",
+                    loadResult.SourcePath);
             }
 
             return;
@@ -109,6 +116,16 @@ public sealed class ConfigLoader : IOnLoad
             if (_debugSettings.Enabled)
             {
                 _logger.LogInformation("[MoarSupplies] Registered stim '{StimId}' with {BuffCount} buff(s).", stim.Id, stim.Buffs.Count);
+            }
+        }
+
+        foreach (DrinkDefinition drink in config.Drinks)
+        {
+            if (!drink.Enabled) continue;
+            if (!_drinkService.Register(drink))
+            {
+                _logger.LogError("[MoarSupplies] Registration stopped after drink '{DrinkId}' failed.", drink.Id);
+                return;
             }
         }
     }

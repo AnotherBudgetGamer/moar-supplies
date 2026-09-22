@@ -50,24 +50,24 @@
                 </div>
             </div>
             <div class="moar-next__cta">
-                <p>Ready to create your stim? Press the button <span aria-hidden="true">↓</span></p>
-                <a class="moar-next__action" href="/moar-supplies/modify"><span aria-hidden="true">+</span> Create a stim</a>
+                <p>Ready to start customizing your raid? Click below <span aria-hidden="true">↓</span></p>
+                <a class="moar-next__action" href="/moar-supplies/modify"><span aria-hidden="true">+</span> Modify Supplies</a>
             </div>
 
             <ol class="moar-workflow">
                 <li class="moar-workflow__step moar-workflow__step--identity">
                     <div class="moar-workflow__copy"><span class="moar-workflow__number">01</span><div><p>Start with a base</p><h3>Name your stim</h3></div></div>
-                    <div class="moar-workflow__frame"><img src="/MoarSupplies/assets/stim-basics.png" alt="The Modify workspace showing base stim and identity controls" /></div>
+                    <button type="button" class="moar-workflow__frame moar-workflow__frame-button" @onclick='() => OpenScreenshot("/MoarSupplies/assets/stim-basics.png", "The Modify workspace showing base stim and identity controls")' aria-label="Expand the identity workspace screenshot"><img src="/MoarSupplies/assets/stim-basics.png" alt="The Modify workspace showing base stim and identity controls" /></button>
                 </li>
                 <li class="moar-workflow__connector" aria-hidden="true"><span>+</span><svg viewBox="0 0 92 34" focusable="false"><path d="M3 17h72" /><path d="m65 7 17 10-17 10" /></svg></li>
                 <li class="moar-workflow__step moar-workflow__step--effects">
                     <div class="moar-workflow__copy"><span class="moar-workflow__number">02</span><div><p>Shape the profile</p><h3>Add the tradeoff</h3></div></div>
-                    <div class="moar-workflow__frame"><img src="/MoarSupplies/assets/stim-effects.png" alt="Effect profile controls with selectable stimulant effects" /></div>
+                    <button type="button" class="moar-workflow__frame moar-workflow__frame-button" @onclick='() => OpenScreenshot("/MoarSupplies/assets/stim-effects.png", "Effect profile controls with selectable stimulant effects")' aria-label="Expand the effects workspace screenshot"><img src="/MoarSupplies/assets/stim-effects.png" alt="Effect profile controls with selectable stimulant effects" /></button>
                 </li>
                 <li class="moar-workflow__connector" aria-hidden="true"><span>✓</span><svg viewBox="0 0 92 34" focusable="false"><path d="M3 17h72" /><path d="m65 7 17 10-17 10" /></svg></li>
                 <li class="moar-workflow__step moar-workflow__step--library">
                     <div class="moar-workflow__copy"><span class="moar-workflow__number">03</span><div><p>Save and play</p><h3>Find it in Database</h3></div></div>
-                    <div class="moar-workflow__frame"><img src="/MoarSupplies/assets/database-details.png" alt="A saved stim displayed in the database with effects and trader availability" /></div>
+                    <button type="button" class="moar-workflow__frame moar-workflow__frame-button" @onclick='() => OpenScreenshot("/MoarSupplies/assets/database-details.png", "A saved stim displayed in the database with effects and trader availability")' aria-label="Expand the database screenshot"><img src="/MoarSupplies/assets/database-details.png" alt="A saved stim displayed in the database with effects and trader availability" /></button>
                 </li>
             </ol>
 
@@ -85,5 +85,32 @@
                 </div>
             </section>
         </section>
+
+        @if (SelectedScreenshotSource is not null)
+        {
+            <div class="moar-screenshot-modal-backdrop" role="presentation" @onclick="CloseScreenshot">
+                <section class="moar-screenshot-modal" role="dialog" aria-modal="true" aria-label="Expanded workflow screenshot" @onclick:stopPropagation>
+                    <button type="button" class="moar-screenshot-modal__close" @onclick="CloseScreenshot" aria-label="Close screenshot preview">×</button>
+                    <img src="@SelectedScreenshotSource" alt="@SelectedScreenshotAlt" />
+                </section>
+            </div>
+        }
     </main>
 </MoarSuppliesLayout>
+
+@code {
+    private string? SelectedScreenshotSource;
+    private string? SelectedScreenshotAlt;
+
+    private void OpenScreenshot(string source, string alt)
+    {
+        SelectedScreenshotSource = source;
+        SelectedScreenshotAlt = alt;
+    }
+
+    private void CloseScreenshot()
+    {
+        SelectedScreenshotSource = null;
+        SelectedScreenshotAlt = null;
+    }
+}

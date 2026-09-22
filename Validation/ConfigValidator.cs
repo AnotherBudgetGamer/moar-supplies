@@ -1,5 +1,6 @@
 using MoarSupplies.Definitions;
 using MoarSupplies.Models;
+using MoarSupplies.Services;
 using SPTarkov.DI.Annotations;
 using System.Text.RegularExpressions;
 
@@ -14,6 +15,12 @@ public sealed partial class ConfigValidator
     private const int SupportedConfigVersion = 1;
 
     private static readonly Regex SafeStimId = CreateSafeStimIdRegex();
+    private readonly TraderDirectory _traderDirectory;
+
+    public ConfigValidator(TraderDirectory traderDirectory)
+    {
+        _traderDirectory = traderDirectory;
+    }
 
     public IReadOnlyList<string> Validate(ModConfig config)
     {
@@ -30,7 +37,7 @@ public sealed partial class ConfigValidator
             return errors;
         }
 
-        HashSet<string> stimIds = new(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> definitionIds = new(StringComparer.OrdinalIgnoreCase);
 
         for (int stimIndex = 0; stimIndex < config.Stims.Count; stimIndex++)
         {
@@ -41,13 +48,60 @@ public sealed partial class ConfigValidator
                 continue;
             }
 
-            ValidateStim(stim, stimIndex, stimIds, errors);
+            ValidateStim(stim, stimIndex, definitionIds, errors);
+        }
+
+        if (config.Drinks is null)
+        {
+            errors.Add("Configuration field 'drinks' is required.");
+            return errors;
+        }
+
+        for (int drinkIndex = 0; drinkIndex < config.Drinks.Count; drinkIndex++)
+        {
+            DrinkDefinition? drink = config.Drinks[drinkIndex];
+            if (drink is null)
+            {
+                errors.Add($"drinks[{drinkIndex}] must be an object.");
+                continue;
+            }
+
+            ValidateDrink(drink, drinkIndex, definitionIds, errors);
         }
 
         return errors;
     }
 
-    private static void ValidateStim(StimDefinition stim, int stimIndex, HashSet<string> stimIds, List<string> errors)
+    private void ValidateDrink(DrinkDefinition drink, int drinkIndex, HashSet<string> definitionIds, List<string> errors)
+    {
+        string label = string.IsNullOrWhiteSpace(drink.Id) ? $"drinks[{drinkIndex}]" : $"Drink '{drink.Id}'";
+        if (string.IsNullOrWhiteSpace(drink.Id)) errors.Add($"{label}: field 'id' is required.");
+        else
+        {
+            if (!SafeStimId.IsMatch(drink.Id)) errors.Add($"{label}: field 'id' must use lowercase letters, numbers, and single hyphens only.");
+            if (!definitionIds.Add(drink.Id)) errors.Add($"{label}: field 'id' duplicates another definition ID.");
+        }
+
+        if (drink.Identity is null) errors.Add($"{label}: field 'identity' is required.");
+        else
+        {
+            if (string.IsNullOrWhiteSpace(drink.Identity.Name)) errors.Add($"{label}: field 'identity.name' is required.");
+            if (string.IsNullOrWhiteSpace(drink.Identity.ShortName)) errors.Add($"{label}: field 'identity.shortName' is required.");
+            if (string.IsNullOrWhiteSpace(drink.Identity.Description)) errors.Add($"{label}: field 'identity.description' is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(drink.BaseItem)) errors.Add($"{label}: field 'baseItem' is required.");
+        else if (!ItemMappings.IsSupportedDrink(drink.BaseItem)) errors.Add($"{label}: field 'baseItem' value '{drink.BaseItem}' is not supported.");
+        if (drink.Resource <= 0) errors.Add($"{label}: field 'resource' must be greater than zero.");
+        if (drink.Nutrition is null) errors.Add($"{label}: field 'nutrition' is required.");
+        else if (!double.IsFinite(drink.Nutrition.Hydration) || !double.IsFinite(drink.Nutrition.Energy)) errors.Add($"{label}: nutrition values must be finite numbers.");
+        if (drink.Nutrition is not null && drink.Nutrition.Hydration == 0 && drink.Nutrition.Energy == 0 && (drink.Buffs is null || drink.Buffs.Count == 0)) errors.Add($"{label}: requires nutrition or at least one timed effect.");
+        ValidateTags(drink.Tags, label, errors);
+        ValidateBuffs(drink.Buffs, label, errors);
+        ValidateTrader(drink.Trader, label, errors);
+    }
+
+    private void ValidateStim(StimDefinition stim, int stimIndex, HashSet<string> stimIds, List<string> errors)
     {
         string label = string.IsNullOrWhiteSpace(stim.Id) ? $"stims[{stimIndex}]" : $"Stim '{stim.Id}'";
 
@@ -109,23 +163,25 @@ public sealed partial class ConfigValidator
         ValidateTrader(stim, label, errors);
     }
 
-    private static void ValidateTags(StimDefinition stim, string label, List<string> errors)
+    private static void ValidateTags(StimDefinition stim, string label, List<string> errors) => ValidateTags(stim.Tags, label, errors);
+
+    private static void ValidateTags(List<string>? tags, string label, List<string> errors)
     {
-        if (stim.Tags is null)
+        if (tags is null)
         {
             errors.Add($"{label}: field 'tags' must be an array when provided.");
             return;
         }
 
-        if (stim.Tags.Count > 8)
+        if (tags.Count > 8)
         {
             errors.Add($"{label}: field 'tags' may contain at most 8 tags.");
         }
 
         HashSet<string> uniqueTags = new(StringComparer.OrdinalIgnoreCase);
-        for (int tagIndex = 0; tagIndex < stim.Tags.Count; tagIndex++)
+        for (int tagIndex = 0; tagIndex < tags.Count; tagIndex++)
         {
-            string? tag = stim.Tags[tagIndex];
+            string? tag = tags[tagIndex];
             string tagLabel = $"{label}: tags[{tagIndex}]";
 
             if (string.IsNullOrWhiteSpace(tag))
@@ -151,17 +207,19 @@ public sealed partial class ConfigValidator
         }
     }
 
-    private static void ValidateBuffs(StimDefinition stim, string label, List<string> errors)
+    private static void ValidateBuffs(StimDefinition stim, string label, List<string> errors) => ValidateBuffs(stim.Buffs, label, errors);
+
+    private static void ValidateBuffs(List<BuffDefinition>? buffs, string label, List<string> errors)
     {
-        if (stim.Buffs is null)
+        if (buffs is null)
         {
             errors.Add($"{label}: field 'buffs' is required.");
             return;
         }
 
-        for (int buffIndex = 0; buffIndex < stim.Buffs.Count; buffIndex++)
+        for (int buffIndex = 0; buffIndex < buffs.Count; buffIndex++)
         {
-            BuffDefinition? buff = stim.Buffs[buffIndex];
+            BuffDefinition? buff = buffs[buffIndex];
             string buffLabel = $"{label}: buffs[{buffIndex}]";
 
             if (buff is null)
@@ -202,22 +260,25 @@ public sealed partial class ConfigValidator
         }
     }
 
-    private static void ValidateTrader(StimDefinition stim, string label, List<string> errors)
+    private void ValidateTrader(StimDefinition stim, string label, List<string> errors) => ValidateTrader(stim.Trader, label, errors);
+
+    private void ValidateTrader(TraderDefinition? traderDefinition, string label, List<string> errors)
     {
-        if (stim.Trader?.Enabled != true)
+        if (traderDefinition?.Enabled != true)
         {
             return;
         }
 
-        TraderDefinition trader = stim.Trader!;
+        TraderDefinition trader = traderDefinition;
 
         if (string.IsNullOrWhiteSpace(trader.Trader))
         {
             errors.Add($"{label}: field 'trader.trader' is required when trader.enabled is true.");
         }
-        else if (!TraderMappings.IsSupported(trader.Trader))
+        else if (!_traderDirectory.TryResolve(trader, out _))
         {
-            errors.Add($"{label}: field 'trader.trader' value '{trader.Trader}' is not supported.");
+            string selectedTrader = string.IsNullOrWhiteSpace(trader.TraderId) ? trader.Trader : $"{trader.Trader} ({trader.TraderId})";
+            errors.Add($"{label}: trader '{selectedTrader}' was not found. Install and enable the trader mod before starting SPT, then select the trader again in the workshop.");
         }
 
         if (trader.LoyaltyLevel is < 1 or > 4)
