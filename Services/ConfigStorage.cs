@@ -203,6 +203,52 @@ public sealed class ConfigStorage
         return ConfigSaveResult.Success();
     }
 
+    public async Task<ConfigSaveResult> DeleteDrinkAsync(string drinkId, CancellationToken cancellationToken)
+    {
+        ModConfig? current = _configState.Current;
+        DrinkDefinition? definition = current?.Drinks.FirstOrDefault(drink => string.Equals(drink.Id, drinkId, StringComparison.OrdinalIgnoreCase));
+        if (current is null || definition is null)
+        {
+            return ConfigSaveResult.Failure("The selected definition could not be found.");
+        }
+
+        List<DrinkDefinition> remainingDrinks = current.Drinks
+            .Where(drink => !string.Equals(drink.Id, definition.Id, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = remainingDrinks };
+
+        try
+        {
+            string configDirectory = GetConfigDirectory();
+            string drinkDirectory = Path.Combine(configDirectory, DrinkDirectoryName);
+            Directory.CreateDirectory(drinkDirectory);
+
+            await WriteJsonAtomicallyAsync(Path.Combine(configDirectory, SettingsFileName), new ModSettings { Version = updatedConfig.Version, Debug = updatedConfig.Debug }, cancellationToken);
+            await WriteSplitConfigurationAsync(updatedConfig, cancellationToken);
+
+            string definitionPath = Path.Combine(drinkDirectory, $"{definition.Id}.json");
+            if (File.Exists(definitionPath))
+            {
+                File.Delete(definitionPath);
+            }
+
+            // A legacy file would otherwise restore the deleted definition when it was the final entry.
+            string legacyPath = Path.Combine(configDirectory, LegacyFileName);
+            if (File.Exists(legacyPath))
+            {
+                File.Delete(legacyPath);
+            }
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+        {
+            _logger.LogError(exception, "[MoarSupplies] Could not delete drink '{DrinkId}'.", definition.Id);
+            return ConfigSaveResult.Failure("The definition could not be deleted. Check the server log and that the config folder is writable.");
+        }
+
+        _configState.Current = updatedConfig;
+        return ConfigSaveResult.Success();
+    }
+
     private async Task WriteSplitConfigurationAsync(ModConfig config, string? originalId, CancellationToken cancellationToken)
     {
         await WriteSplitConfigurationAsync(config, cancellationToken);

@@ -189,7 +189,14 @@ public sealed class ItemService
             return false;
         }
 
-        _logger.LogInformation("[MoarSupplies] Created drink '{DrinkId}' with template ID '{ItemTemplateId}' from base template '{BaseTemplateId}'.", drink.Id, result.ItemId, baseItem.TemplateId);
+        if (_debugSettings.Enabled)
+        {
+            _logger.LogInformation(
+                "[MoarSupplies] Created drink '{DrinkId}' with template ID '{ItemTemplateId}' from base template '{BaseTemplateId}'.",
+                drink.Id,
+                result.ItemId,
+                baseItem.TemplateId);
+        }
         return true;
     }
 }

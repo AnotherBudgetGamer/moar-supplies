@@ -4,7 +4,7 @@
 
 It includes a built-in web workshop for everyday editing and a clear JSON format for anyone who prefers to work directly with files. Define a stim's identity, base item, uses, effects, timing, price, and trader; Moar Supplies turns that friendly definition into a persistent in-game item.
 
-> **Version:** 0.6.0  
+> **Version:** 0.6.1  
 > **SPT compatibility:** 4.1.x (tested with 4.1.2; `~4.1.2`)  
 > **License:** All Rights Reserved
 
@@ -231,7 +231,7 @@ dotnet build -p:SptRuntimeDirectory="C:\path\to\SPT_Runtime\"
 
 ### Deploy locally
 
-`dotnet build -c Release` creates `ReleaseZip/AnotherBudgetGamer-MoarSupplies-0.6.0.zip`, ready to extract into an SPT installation. `Deploy.ps1` builds the same release and installs it locally at `user/mods/AnotherBudgetGamer-MoarSupplies`. It preserves an existing `config/` folder, so workshop changes and custom definitions are not overwritten.
+`dotnet build -c Release` creates `ReleaseZip/AnotherBudgetGamer-MoarSupplies-0.6.1.zip`, ready to extract into an SPT installation. `Deploy.ps1` builds the same release and installs it locally at `user/mods/AnotherBudgetGamer-MoarSupplies`. It preserves an existing `config/` folder, so workshop changes and custom definitions are not overwritten.
 
 ```powershell
 .\Deploy.ps1

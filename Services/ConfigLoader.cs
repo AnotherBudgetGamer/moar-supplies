@@ -90,6 +90,7 @@ public sealed class ConfigLoader : IOnLoad
         _logger.LogInformation("[MoarSupplies] Configuration loaded.");
         _logger.LogInformation("[MoarSupplies] Loaded {StimCount} stim definition(s).", config.Stims.Count);
 
+        int createdStimCount = 0;
         foreach (StimDefinition stim in config.Stims)
         {
             if (_debugSettings.Enabled)
@@ -117,8 +118,11 @@ public sealed class ConfigLoader : IOnLoad
             {
                 _logger.LogInformation("[MoarSupplies] Registered stim '{StimId}' with {BuffCount} buff(s).", stim.Id, stim.Buffs.Count);
             }
+
+            createdStimCount++;
         }
 
+        int createdDrinkCount = 0;
         foreach (DrinkDefinition drink in config.Drinks)
         {
             if (!drink.Enabled) continue;
@@ -127,7 +131,12 @@ public sealed class ConfigLoader : IOnLoad
                 _logger.LogError("[MoarSupplies] Registration stopped after drink '{DrinkId}' failed.", drink.Id);
                 return;
             }
+
+            createdDrinkCount++;
         }
+
+        _logger.LogInformation("[MoarSupplies] {StimCount} stim(s) created.", createdStimCount);
+        _logger.LogInformation("[MoarSupplies] {DrinkCount} drink(s) created.", createdDrinkCount);
     }
 
 }

@@ -27,7 +27,20 @@
                             </section>
                             <section class="moar-editor__section"><div class="moar-editor__section-heading"><p class="moar-kicker">AVAILABILITY</p><h2>Place it in the world</h2></div><div class="moar-form-grid"><label class="moar-status-field"><span class="moar-status-field__label">@(Draft.Trader!.Enabled ? "Enabled" : "Disabled")</span><span class="moar-status-toggle"><input type="checkbox" @bind="Draft.Trader!.Enabled" /><span class="moar-status-toggle__control" aria-hidden="true"></span><span class="moar-status-toggle__description">Make this drink purchasable</span></span></label>@if (Draft.Trader!.Enabled) { <label>Trader<select value="@SelectedTraderId" @onchange="SelectTrader">@foreach (AvailableTrader trader in AvailableTraders) { <option value="@trader.Id">@trader.DisplayName</option> }</select></label><label>Loyalty level<select @bind="Draft.Trader!.LoyaltyLevel">@foreach (int level in Enumerable.Range(1, 4)) { <option value="@level">Level @level</option> }</select></label><label>Price<input type="number" min="1" @bind="Draft.Trader!.Price" /></label> }</div></section>
                         </form>
-                        <aside class="moar-editor-preview" aria-label="Drink preview"><p class="moar-kicker">LIVE PREVIEW</p><h2>@Draft.Identity.Name</h2><span>@Draft.Identity.ShortName</span><p>@Draft.Identity.Description</p><dl><div><dt>Base drink</dt><dd>@DisplayName(Draft.BaseItem)</dd></div><div><dt>Resource</dt><dd>@Draft.Resource</dd></div><div><dt>Hydration</dt><dd>@Draft.Nutrition.Hydration</dd></div><div><dt>Energy</dt><dd>@Draft.Nutrition.Energy</dd></div><div><dt>Timed effects</dt><dd>@Draft.Buffs.Count</dd></div></dl><button type="button" class="moar-button" @onclick="SaveDraftAsync" disabled="@IsSaving">@(IsSaving ? "Saving…" : "Save drink")</button>@if (SaveErrors.Count > 0) { <div class="moar-save-message moar-save-message--error" role="alert"><strong>Could not save</strong><ul>@foreach (string error in SaveErrors) { <li>@error</li> }</ul></div> } else if (!string.IsNullOrWhiteSpace(SaveMessage)) { <p class="moar-save-message moar-save-message--success" role="status">@SaveMessage</p> }</aside>
+                        <aside class="moar-editor-preview" aria-label="Drink preview"><p class="moar-kicker">LIVE PREVIEW</p><h2>@Draft.Identity.Name</h2><span>@Draft.Identity.ShortName</span><p>@Draft.Identity.Description</p><dl><div><dt>Base drink</dt><dd>@DisplayName(Draft.BaseItem)</dd></div><div><dt>Resource</dt><dd>@Draft.Resource</dd></div><div><dt>Hydration</dt><dd>@Draft.Nutrition.Hydration</dd></div><div><dt>Energy</dt><dd>@Draft.Nutrition.Energy</dd></div><div><dt>Timed effects</dt><dd>@Draft.Buffs.Count</dd></div></dl><button type="button" class="moar-button" @onclick="SaveDraftAsync" disabled="@IsSaving">@(IsSaving ? "Saving…" : "Save drink")</button>@if (!IsCreating) { <div class="moar-delete-action"><button type="button" class="moar-delete-button" @onclick="OpenDeleteConfirmation">Delete Drink</button></div> }@if (SaveErrors.Count > 0) { <div class="moar-save-message moar-save-message--error" role="alert"><strong>Could not save</strong><ul>@foreach (string error in SaveErrors) { <li>@error</li> }</ul></div> } else if (!string.IsNullOrWhiteSpace(SaveMessage)) { <p class="moar-save-message moar-save-message--success" role="status">@SaveMessage</p> }</aside>
+                    </div>
+                }
+
+                @if (DeleteConfirmationOpen)
+                {
+                    <div class="moar-delete-dialog-backdrop" role="presentation" @onclick="CloseDeleteConfirmation">
+                        <section class="moar-delete-dialog" role="alertdialog" aria-modal="true" aria-labelledby="moar-delete-dialog-title" aria-describedby="moar-delete-dialog-description" @onclick:stopPropagation>
+                            <p class="moar-kicker">DELETE DRINK</p>
+                            <h2 id="moar-delete-dialog-title">Delete @Draft?.Identity.Name?</h2>
+                            <p id="moar-delete-dialog-description">This will completely remove the definition file from the database. It cannot be undone.</p>
+                            @if (DeleteErrors.Count > 0) { <div class="moar-save-message moar-save-message--error" role="alert"><strong>Could not delete</strong><ul>@foreach (string error in DeleteErrors) { <li>@error</li>}</ul></div> }
+                            <div class="moar-delete-dialog__actions"><button type="button" class="moar-button moar-button--secondary" @onclick="CloseDeleteConfirmation" disabled="@IsDeleting">Cancel</button><button type="button" class="moar-delete-button" @onclick="DeleteDraftAsync" disabled="@IsDeleting">@(IsDeleting ? "Deleting…" : "Proceed with deletion")</button></div>
+                        </section>
                     </div>
                 }
 
@@ -38,8 +51,11 @@
     private bool IsCreating;
     private bool EffectPickerOpen;
     private bool IsSaving;
+    private bool IsDeleting;
+    private bool DeleteConfirmationOpen;
     private string? SaveMessage;
     private List<string> SaveErrors = [];
+    private List<string> DeleteErrors = [];
     private static readonly string[] BaseItems = ["aquamari", "apple-juice", "emergency-water-ration", "grand-juice", "hot-rod", "ice-green-tea", "kvass", "max-energy", "milk", "moonshine", "pevko", "pineapple-juice", "purified-water", "ratcola", "tarcola", "tarkovskaya-vodka", "vita-juice", "water", "whiskey"];
     private static readonly string[] AvailableEffects = ["aiming", "antidote", "assault", "attention", "bodyTemperature", "concussion", "damageModifier", "endurance", "energyRate", "handsTremor", "healthRate", "hydrationRate", "maxStamina", "painSuppression", "staminaRate", "stressResistance", "weightLimit"];
     private IReadOnlyList<AvailableTrader> AvailableTraders => TraderDirectory.GetAvailableTraders();
@@ -65,6 +81,9 @@
     private void SelectTrader(ChangeEventArgs changeEvent) { if (Draft?.Trader is null || changeEvent.Value is not string traderId) return; AvailableTrader? trader = AvailableTraders.FirstOrDefault(candidate => string.Equals(candidate.Id, traderId, StringComparison.OrdinalIgnoreCase)); if (trader is not null) { Draft.Trader.Trader = trader.DisplayName; Draft.Trader.TraderId = trader.Id; } }
     private void AddEffect(string effect) { Draft!.Buffs.Add(new BuffDefinition { Effect = effect, Value = RequiresValue(effect) ? 0 : null, Duration = 60 }); EffectPickerOpen = false; }
     private void RemoveEffect(BuffDefinition buff) => Draft!.Buffs.Remove(buff);
+    private void OpenDeleteConfirmation() { DeleteErrors = []; DeleteConfirmationOpen = true; }
+    private void CloseDeleteConfirmation() { if (!IsDeleting) { DeleteConfirmationOpen = false; DeleteErrors = []; } }
+    private async Task DeleteDraftAsync() { if (Draft is null || string.IsNullOrWhiteSpace(DrinkId) || IsCreating || IsDeleting) return; IsDeleting = true; DeleteErrors = []; ConfigSaveResult result = await ConfigStorage.DeleteDrinkAsync(DrinkId, CancellationToken.None); IsDeleting = false; DeleteErrors = result.Errors.ToList(); if (result.Succeeded) { DeleteConfirmationOpen = false; NavigationManager.NavigateTo("/moar-supplies/database"); } }
     private async Task SaveDraftAsync() { if (Draft is null || IsSaving) return; IsSaving = true; SaveMessage = null; SaveErrors = []; ConfigSaveResult result = await ConfigStorage.SaveDrinkAsync(Draft, IsCreating ? null : DrinkId, CancellationToken.None); IsSaving = false; SaveErrors = result.Errors.ToList(); if (result.Succeeded) { IsCreating = false; DrinkId = Draft.Id; SaveMessage = "Saved to config/drinks. Restart the SPT server to apply this definition in-game."; } }
     private static bool RequiresValue(string effect) => !BuffMappings.TryGet(effect, out BuffMapping mapping) || mapping.RequiresValue;
     private static string DisplayName(string value) => System.Text.RegularExpressions.Regex.Replace(value.Replace('-', ' '), "(?<!^)([A-Z])", " $1");

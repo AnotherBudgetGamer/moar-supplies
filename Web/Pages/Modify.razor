@@ -100,10 +100,6 @@
                                             <label>Price<input type="number" min="1" placeholder="Roubles" @bind="Draft.Trader!.Price" /></label>
                                         }
                                     </div>
-                                    @if (!IsCreating)
-                                    {
-                                        <div class="moar-delete-action"><button type="button" class="moar-delete-button" @onclick="OpenDeleteConfirmation">Delete Stim</button></div>
-                                    }
                                 </section>
                             </div>
                         </form>
@@ -111,6 +107,10 @@
                             <p class="moar-kicker">LIVE PREVIEW</p><h2>@Draft.Identity.Name</h2><span>@Draft.Identity.ShortName</span><p>@Draft.Identity.Description</p>
                             <dl><div><dt>Base item</dt><dd>@DisplayName(Draft.BaseItem)</dd></div><div><dt>Uses</dt><dd>@Draft.Uses</dd></div><div><dt>Effects</dt><dd>@Draft.Buffs.Count</dd></div></dl>
                             <button type="button" class="moar-button" @onclick="SaveDraftAsync" disabled="@IsSaving">@(IsSaving ? "Saving…" : "Save definition")</button>
+                            @if (!IsCreating)
+                            {
+                                <div class="moar-delete-action"><button type="button" class="moar-delete-button" @onclick="OpenDeleteConfirmation">Delete Stim</button></div>
+                            }
                             @if (SaveErrors.Count > 0)
                             {
                                 <div class="moar-save-message moar-save-message--error" role="alert">
