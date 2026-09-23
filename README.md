@@ -1,24 +1,25 @@
 # Moar Supplies
 
-**Moar Supplies** is a server mod for **SPT 4.1.2** that lets you create, tune, and sell configurable stimulant items without working with T***** template IDs or SPT database structures.
+**Moar Supplies** is a server mod for **SPT 4.1.2** that lets you create, tune, and sell configurable consumable items without working with T***** template IDs or SPT database structures.
 
-It includes a built-in web workshop for everyday editing and a clear JSON format for anyone who prefers to work directly with files. Define a stim's identity, base item, uses, effects, timing, price, and trader; Moar Supplies turns that friendly definition into a persistent in-game item.
+It includes a built-in web workshop for everyday editing and a clear JSON format for anyone who prefers to work directly with files. Define an item's identity, base item, uses, effects, timing, price, and trader; Moar Supplies turns that friendly definition into a persistent in-game supply.
 
 > **Version:** 0.6.1  
 > **SPT compatibility:** 4.1.x (tested with 4.1.2; `~4.1.2`)  
 > **License:** All Rights Reserved
 
-![Moar Supplies stimulant editor](wwwroot/assets/stim-basics.png)
+![Moar Supplies item editor](wwwroot/assets/stim-basics.png)
 
 ## What it does
 
-- Creates configurable stimulants by cloning a supported vanilla consumable.
+- Creates configurable consumable items by cloning a supported vanilla item.
+- Creates configurable medical-kit clones while preserving the base kit's native treatment effects.
 - Uses readable names such as `propital`, `healthRate`, and `therapist` instead of raw SPT IDs.
 - Lets you add beneficial effects, tradeoffs, durations, and delayed effects.
 - Gives each definition stable internal IDs, so items already in a profile remain valid after a normal server restart.
-- Adds enabled stims to Therapist, Prapor, or Skier with a configurable rouble price and loyalty level.
+- Adds enabled items to world loot and, when selected, to supported traders with a configurable rouble price and loyalty level.
 - Provides a server-side web workshop to browse, create, edit, enable/disable, and delete definitions.
-- Stores definitions as one readable JSON file per stim and validates the complete configuration before registering anything.
+- Stores definitions as one readable JSON file per item and validates the complete configuration before registering anything.
 
 ## Install
 
@@ -30,32 +31,32 @@ It includes a built-in web workshop for everyday editing and a clear JSON format
    ```
 
 3. Confirm that the mod folder contains `MoarSupplies.dll`, `config/`, and `wwwroot/`.
-4. Start the SPT server. The server log should report that Moar Supplies loaded its configuration and registered its enabled stim definitions.
+4. Start the SPT server. The server log should report that Moar Supplies loaded its configuration and registered its enabled item definitions.
 5. Open the SPT server's web interface and select **Moar Supplies** from the navigation. The workshop is available at `/moar-supplies`.
 
 The included definitions provide a working starting set. You can leave them as-is, edit them, or create your own.
 
 ## Use the workshop
 
-The web interface is the recommended way to manage stims. It is designed to keep SPT-specific implementation details out of the way.
+The web interface is the recommended way to manage items and supplies. It is designed to keep SPT-specific implementation details out of the way.
 
-![Stimulant effects screen](wwwroot/assets/stim-effects.png)
+![Item effects screen](wwwroot/assets/stim-effects.png)
 
 1. Open **Moar Supplies → Database** to inspect existing definitions.
-2. Select a stim, or choose **Add Stim** in **Modify**.
-3. Choose a base stim and number of uses.
+2. Select an item, or choose **Add Stim** in **Modify**. (The current UI label is retained for compatibility.)
+3. Choose a base item and number of uses.
 4. Enter the player-facing name, short name, and description.
 5. Add effects and set each effect's value, duration, and optional delay.
-6. Optionally make the stim purchasable through Therapist, Prapor, or Skier.
+6. Optionally make the item purchasable through a supported trader. All enabled items remain available in world loot; this setting only controls trader sales.
 7. Save the definition, then **restart the SPT server** before starting the game to apply it in-game.
 
-Saved definitions are written to `config/stims/`, one file per stim. The workshop tells you about validation errors before it writes a change.
+Saved definitions are written to `config/stims/`, one file per item. The workshop tells you about validation errors before it writes a change.
 
 ![Definition database](wwwroot/assets/database.png)
 
 ### A note about restarts
 
-Changes made in the workshop are saved immediately, but they are intentionally registered only during server startup. Restart the server after adding, editing, enabling, disabling, or deleting a stim. This keeps generated item IDs stable and protects stims already stored in a profile.
+Changes made in the workshop are saved immediately, but they are intentionally registered only during server startup. Restart the server after adding, editing, enabling, disabling, or deleting an item. This keeps generated item IDs stable and protects supplies already stored in a profile.
 
 ## Update or uninstall
 
@@ -65,9 +66,10 @@ To update, extract the new release archive into the SPT installation and allow i
 
 To uninstall, first back up your SPT profile and remove or consume every Moar Supplies item from your PMC and scav inventories. Then delete this folder:
 
-`	ext
+```text
 <Your SPT folder>/SPT_Runtime/user/mods/AnotherBudgetGamer-MoarSupplies/
-``n
+```
+
 Moar Supplies can be removed without leaving server files behind, but custom item templates may still be referenced by an existing profile. After removal, start the server and load the affected profile to verify it is healthy. If you encounter a profile problem, restore your backup; SPT profile repair is not guaranteed.
 
 ## Configure with JSON
@@ -80,7 +82,9 @@ config/
   stims/
     argus.json
     hydra.json
-    your-stim.json
+    your-item.json
+  medical-packs/
+    field-afak.json
 ```
 
 `settings.json` contains the configuration format version and optional debug logging:
@@ -92,16 +96,16 @@ config/
 }
 ```
 
-Each file in `config/stims/` contains one definition. This is the full shape of a stim:
+Each file in `config/stims/` contains one item definition. This is the full shape of an item:
 
 ```json
 {
-  "id": "example-stim",
+  "id": "example-item",
   "enabled": true,
   "identity": {
-    "name": "Example Stim",
+    "name": "Example Item",
     "shortName": "EX-1",
-    "description": "A configurable stimulant with a clear tradeoff."
+    "description": "A configurable supply with a clear tradeoff."
   },
   "baseItem": "propital",
   "uses": 1,
@@ -139,11 +143,11 @@ Each file in `config/stims/` contains one definition. This is the full shape of 
 | `baseItem` | The vanilla consumable to clone. See [Supported base items](#supported-base-items). |
 | `uses` | Number of uses provided by the new item. Must be greater than zero. |
 | `tags` | Optional workshop labels; up to eight, each 32 characters or fewer. They do not change gameplay. |
-| `buffs` | An array of effects. Each effect has a duration in seconds and may have a delayed start. |
-| `trader` | Optional availability. Set `enabled` to `false` to keep the item out of trader inventories. |
+| `buffs` | An array of effects. Each effect has a duration in seconds (maximum 1,800 seconds / 30 minutes) and may have a delayed start. |
+| `trader` | Optional trader availability. Set `enabled` to `false` to keep the item out of trader inventories; enabled items remain available in world loot. |
 | `trader.traderId` | Optional stable SPT trader ID. The workshop writes this automatically for every selection; it lets Moar Supplies target a modded trader reliably while retaining its friendly name. |
 
-Definitions are loaded as a complete set. If any definition is invalid, Moar Supplies reports the errors and registers no stims, preventing a partly updated setup.
+Definitions are loaded as a complete set. If any definition is invalid, Moar Supplies reports the errors and registers no items, preventing a partly updated setup.
 
 ### Supported base items
 
@@ -153,9 +157,39 @@ Definitions are loaded as a complete set. If any definition is invalid, Moar Sup
 
 `aquamari`, `apple-juice`, `emergency-water-ration`, `grand-juice`, `hot-rod`, `ice-green-tea`, `kvass`, `max-energy`, `milk`, `moonshine`, `pevko`, `pineapple-juice`, `purified-water`, `ratcola`, `tarcola`, `tarkovskaya-vodka`, `vita-juice`, `water`, and `whiskey`.
 
+### Medical packs
+
+Medical-pack definitions live in `config/medical-packs/`. They clone the base item's treatment behavior (including what it can treat) and expose only the two values that are safe to tune independently:
+
+```json
+{
+  "id": "example-medical-pack",
+  "enabled": true,
+  "identity": {
+    "name": "Example Medical Pack",
+    "shortName": "EMP",
+    "description": "A configurable medical kit."
+  },
+  "baseItem": "afak",
+  "resource": 480,
+  "resourceRate": 60,
+  "tags": ["medical"],
+  "trader": {
+    "enabled": true,
+    "trader": "therapist",
+    "loyaltyLevel": 1,
+    "price": 40000
+  }
+}
+```
+
+`resource` follows the cloned item's native resource behavior: it is a total HP pool for med kits, a surgery-use count for surgical kits, and can be zero for a one-use treatment item. `resourceRate` is the health restored per treatment where the base supports it. For surgical kits, `surgeryRestoreMultiplier` adjusts the restored limb health and `useTimeMultiplier` adjusts the base animation time; for example, `1.2` restores 20% more health and `0.5` takes half as long.
+
+Supported medical bases: `afak`, `ai2`, `car`, `ifak`, `salewa`, `grizzly`, `sanitar-afak`; `cms`, `surv12`, `sanitar-surgery-kit`; `bandage`, `army-bandage`, `cat`, `esmarch`, `calok-b`; `splint`, `alu-splint`; `golden-star`, `vaseline`; and `analgin`, `augmentin`, `ibuprofen`.
+
 ### Supported traders
 
-All vanilla traders are supported: `therapist`, `prapor`, `skier`, `peacekeeper`, `mechanic`, `ragman`, `jaeger`, and `fence`. The workshop also discovers every enabled trader mod that has registered with SPT, displaying its friendly trader name while saving its stable internal ID. Trader loyalty levels must be from 1 through 4, and a sale price must be greater than zero.
+All vanilla traders are supported: `therapist`, `prapor`, `skier`, `peacekeeper`, `mechanic`, `ragman`, `jaeger`, and `fence`. The workshop also discovers every enabled trader mod that has registered with SPT, displaying its friendly trader name while saving its stable internal ID. Trader availability controls purchasing only: items not available from a trader remain in world loot. Trader loyalty levels must be from 1 through 4, and a sale price must be greater than zero.
 
 ### Supported effects
 
@@ -170,9 +204,9 @@ The workshop presents the available effects. JSON authors can use the friendly e
 
 Some status effects do not take a `value`; the workshop handles this automatically. For JSON, omit `value` for `antidote`, `concussion`, `fracture`, `frostbite`, `heavyBleeding`, `lightBleeding`, `painSuppression`, `removeAllBloodLosses`, `tunnelVision`, `quantumTunnelling`, and `unknownToxin`.
 
-## Included stims
+## Included supplies
 
-The release configuration includes five enabled examples—Argus, Baldur, Hydra, Ravana, and Svarog—plus a disabled control definition. They demonstrate different base items, trader placement, beneficial effects, drawbacks, and delayed effects. Treat them as editable examples rather than a required balance preset.
+The release configuration includes five enabled example supplies—Argus, Baldur, Hydra, Ravana, and Svarog—plus a disabled control definition. It also includes three enabled medical-pack test clones: Moar AFAK (480 pool / 60 per treatment), Moar CALOK-B (four treatments), and Moar Grizzly (2,160 pool / 210 per treatment). All three are sold by Therapist level 1. Treat them as editable examples rather than a required balance preset.
 
 ## Troubleshooting
 
@@ -182,11 +216,19 @@ Verify the release contents were extracted without an extra nested folder, then 
 **My changes are saved but not in-game**  
 Restart the SPT server, then launch the game. Definitions are applied at server startup.
 
-**No Moar Supplies stimulants registered after startup**
+**No Moar Supplies items registered after startup**
 Read the server log. Moar Supplies validates every definition before making any SPT database changes; a malformed JSON file, duplicate ID, unsupported base item/effect/trader, or invalid price can stop the entire set from loading. Set `"debug": true` in `config/settings.json` for more detailed logging.
 
-**A stim vanished after I changed it**  
+**An item vanished after I changed it**
 Check whether its `enabled` field is still `true`. Also avoid changing a definition's `id` once items using it are in a profile: the ID is the stable identity used to derive the in-game item template.
+
+## Post-1.0 experimental roadmap
+
+Version 1.0 focuses on a stable, user-editable catalog of vanilla-base supplies: medical kits, surgery kits, bleeding treatments, splints, balms, consumables, drinks, and stimulants. The supported editing controls preserve the selected vanilla item's native use behavior.
+
+After 1.0, the first experimental track is **cross-item timed effects**. This would test attaching Moar Supplies buffs and debuffs to item classes that do not normally use them—for example, a bandage that applies a short health-regeneration effect after treating bleeding. It is intentionally deferred because each medical item type must be validated in raid for client behavior, resource consumption, animations, effects timing, and profile safety before it can be considered stable.
+
+Experimental effects will remain opt-in and clearly labeled until they have been tested across the supported item families.
 
 ## For developers
 
@@ -201,7 +243,7 @@ Base-item and effect resolution
             ↓
 SPT item clone, buff registration, trader registration
             ↓
-Persistent in-game stim
+Persistent in-game item
 ```
 
 The main code is organized as follows:
@@ -213,15 +255,17 @@ The main code is organized as follows:
 | `Validation/` | Whole-configuration validation. |
 | `Services/` | Loading, storage, stable IDs, item creation, buffs, and trader registration. |
 | `Web/` and `wwwroot/` | SPT web workshop and its assets. |
-| `config/` | Shipped settings and stim definitions. |
+| `config/` | Shipped settings and item definitions. |
 
 ### Build locally
 
 The project expects the SPT runtime assemblies from a local SPT 4.1.2 installation. By default, it looks for them at `../spt-read-only/SPP-T*****/SPT_Runtime/` relative to the project. Point MSBuild at another runtime with `SptRuntimeDirectory` if needed.
 
 ```powershell
-dotnet build
+dotnet build -c Release
 ```
+
+This creates `ReleaseZip/AnotherBudgetGamer-MoarSupplies-0.6.1.zip`, ready to extract into an SPT installation.
 
 To use a different runtime location:
 
@@ -231,7 +275,7 @@ dotnet build -p:SptRuntimeDirectory="C:\path\to\SPT_Runtime\"
 
 ### Deploy locally
 
-`dotnet build -c Release` creates `ReleaseZip/AnotherBudgetGamer-MoarSupplies-0.6.1.zip`, ready to extract into an SPT installation. `Deploy.ps1` builds the same release and installs it locally at `user/mods/AnotherBudgetGamer-MoarSupplies`. It preserves an existing `config/` folder, so workshop changes and custom definitions are not overwritten.
+`Deploy.ps1` builds the same release and installs it locally at `user/mods/AnotherBudgetGamer-MoarSupplies`. It preserves an existing `config/` folder, so workshop changes and custom definitions are not overwritten.
 
 ```powershell
 .\Deploy.ps1
@@ -245,6 +289,6 @@ Specify another runtime when needed:
 
 ## Contributing and feedback
 
-Bug reports and improvement ideas are welcome through this repository's GitHub Issues once the repository is public. When reporting a configuration problem, include the relevant stim JSON and the Moar Supplies portion of the SPT server log—without sharing personal profile data.
+Bug reports and improvement ideas are welcome through this repository's GitHub Issues once the repository is public. When reporting a configuration problem, include the relevant item-definition JSON and the Moar Supplies portion of the SPT server log—without sharing personal profile data.
 
 Moar Supplies is built around experimentation. Please back up your SPT installation and profile before changing a live setup, especially before removing or renaming definitions that may already exist in a stash.

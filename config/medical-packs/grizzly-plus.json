@@ -1,0 +1,19 @@
+{
+  "id": "grizzly-plus",
+  "enabled": true,
+  "identity": {
+    "name": "Moar Grizzly",
+    "shortName": "M-Griz",
+    "description": "A Sportsman Series Grizzly kit with 20% more treatment capacity and healing per use than the standard kit."
+  },
+  "baseItem": "grizzly",
+  "resource": 2160,
+  "resourceRate": 210,
+  "tags": ["medical", "test", "grizzly"],
+  "trader": {
+    "enabled": true,
+    "trader": "therapist",
+    "loyaltyLevel": 1,
+    "price": 80000
+  }
+}

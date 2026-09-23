@@ -1,0 +1,19 @@
+{
+  "id": "field-afak",
+  "enabled": true,
+  "identity": {
+    "name": "Moar AFAK",
+    "shortName": "M-AFAK",
+    "description": "An Advanced Individual First Aid Kit with 20% more treatment capacity and healing per use than the standard AFAK."
+  },
+  "baseItem": "afak",
+  "resource": 480,
+  "resourceRate": 60,
+  "tags": ["medical", "test", "afak"],
+  "trader": {
+    "enabled": true,
+    "trader": "therapist",
+    "loyaltyLevel": 1,
+    "price": 40000
+  }
+}

@@ -66,6 +66,37 @@ public static class ItemMappings
 
     public static bool TryGetDrink(string baseItem, out BaseItemMapping mapping) =>
         SupportedDrinks.TryGetValue(baseItem, out mapping!);
+
+    private static readonly Dictionary<string, BaseItemMapping> SupportedMedicalPacks = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["afak"] = new("60098ad7c2240c0fe85c570a"),
+        ["ai2"] = new("5755356824597772cb798962"),
+        ["alu-splint"] = new("5af0454c86f7746bf20992e8"),
+        ["analgin"] = new("544fb37f4bdc2dee738b4567"),
+        ["army-bandage"] = new("5751a25924597722c463c472"),
+        ["augmentin"] = new("590c695186f7741e566b64a2"),
+        ["bandage"] = new("544fb25a4bdc2dfb738b4567"),
+        ["car"] = new("590c678286f77426c9660122"),
+        ["cat"] = new("60098af40accd37ef2175f27"),
+        ["ifak"] = new("590c661e86f7741e566b646a"),
+        ["calok-b"] = new("5e8488fa988a8701445df1e4"),
+        ["esmarch"] = new("5e831507ea0a7c419c2f9bd9"),
+        ["golden-star"] = new("5751a89d24597722aa0e8db0"),
+        ["grizzly"] = new("590c657e86f77412b013051d"),
+        ["ibuprofen"] = new("5af0548586f7743a532b7e99"),
+        ["salewa"] = new("544fb45d4bdc2dee738b4568"),
+        ["sanitar-afak"] = new("5e99711486f7744bfc4af328"),
+        ["sanitar-surgery-kit"] = new("5e99735686f7744bfc4af32c"),
+        ["splint"] = new("544fb3364bdc2d34748b456a"),
+        ["surv12"] = new("5d02797c86f774203f38e30a"),
+        ["vaseline"] = new("5755383e24597772cb798966"),
+        ["cms"] = new("5d02778e86f774203e7dedbe"),
+    };
+
+    public static bool IsSupportedMedicalPack(string baseItem) => SupportedMedicalPacks.ContainsKey(baseItem);
+
+    public static bool TryGetMedicalPack(string baseItem, out BaseItemMapping mapping) =>
+        SupportedMedicalPacks.TryGetValue(baseItem, out mapping!);
 }
 
 /// <summary>

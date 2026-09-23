@@ -23,6 +23,7 @@
                     <div class="moar-modify__actions">
                         <button type="button" class="moar-add-stim" @onclick="OpenStimCreator"><span aria-hidden="true">+</span> Add Stim</button>
                         <button type="button" class="moar-add-stim" @onclick="OpenDrinkCreator"><span aria-hidden="true">+</span> Add Drink</button>
+                        <button type="button" class="moar-add-stim" @onclick="OpenMedicalPackCreator"><span aria-hidden="true">+</span> Add Medical Pack</button>
                         <span class="moar-prototype-badge">One file per definition</span>
                     </div>
                 </div>
@@ -30,6 +31,10 @@
                 @if (IsDrinkWorkspace)
                 {
                     <ModifyDrink @key="DrinkId" DrinkId="@DrinkId" CreateNew="CreateNewDrink" />
+                }
+                else if (IsMedicalPackWorkspace)
+                {
+                    <ModifyMedicalPack @key="MedicalPackId" MedicalPackId="@MedicalPackId" CreateNew="CreateNewMedicalPack" />
                 }
                 else if (Draft is null)
                 {
@@ -72,7 +77,7 @@
                                             <p class="moar-effect-editor__description">@EffectHelp.Describe(buff.Effect)</p>
                                             <div class="moar-effect-fields">
                                                 @if (RequiresValue(buff.Effect)) { <label>Value <span class="moar-effect-unit--placeholder" aria-hidden="true">amount</span><input type="number" step="any" @bind="buff.Value" /></label> }
-                                                <label>Duration <span>seconds</span><input type="number" min="0" @bind="buff.Duration" /></label>
+                                                <label>Duration <span>seconds, max @EffectDuration.MaximumSeconds</span><input type="number" min="0" max="@EffectDuration.MaximumSeconds" @bind="buff.Duration" /></label>
                                                 <label>Delay <span>seconds</span><input type="number" min="0" @bind="buff.Delay" /></label>
                                             </div>
                                         </article>
@@ -90,7 +95,7 @@
 
                             <div class="moar-editor__bottom-row">
                                 <section class="moar-editor__section">
-                                    <div class="moar-editor__section-heading"><p class="moar-kicker">AVAILABILITY</p><h2>Place it in the world</h2></div>
+                                    <div class="moar-editor__section-heading"><p class="moar-kicker">AVAILABILITY</p><h2>Set trader availability</h2><p>Every enabled item remains in world loot. This setting only controls whether it can be purchased from a trader.</p></div>
                                     <div class="moar-form-grid">
                                         <label class="moar-status-field"><span class="moar-status-field__label">@(Draft.Trader!.Enabled ? "Enabled" : "Disabled")</span><span class="moar-status-toggle"><input type="checkbox" @bind="Draft.Trader!.Enabled" /><span class="moar-status-toggle__control" aria-hidden="true"></span><span class="moar-status-toggle__description">Make this stim purchasable</span></span></label>
                                         @if (Draft.Trader!.Enabled)
@@ -106,22 +111,26 @@
                         <aside class="moar-editor-preview" aria-label="Definition preview">
                             <p class="moar-kicker">LIVE PREVIEW</p><h2>@Draft.Identity.Name</h2><span>@Draft.Identity.ShortName</span><p>@Draft.Identity.Description</p>
                             <dl><div><dt>Base item</dt><dd>@DisplayName(Draft.BaseItem)</dd></div><div><dt>Uses</dt><dd>@Draft.Uses</dd></div><div><dt>Effects</dt><dd>@Draft.Buffs.Count</dd></div></dl>
-                            <button type="button" class="moar-button" @onclick="SaveDraftAsync" disabled="@IsSaving">@(IsSaving ? "Saving…" : "Save definition")</button>
-                            @if (!IsCreating)
-                            {
-                                <div class="moar-delete-action"><button type="button" class="moar-delete-button" @onclick="OpenDeleteConfirmation">Delete Stim</button></div>
-                            }
-                            @if (SaveErrors.Count > 0)
-                            {
-                                <div class="moar-save-message moar-save-message--error" role="alert">
-                                    <strong>Could not save</strong>
-                                    <ul>@foreach (string error in SaveErrors) { <li>@error</li> }</ul>
-                                </div>
-                            }
-                            else if (!string.IsNullOrWhiteSpace(SaveMessage))
-                            {
-                                <p class="moar-save-message moar-save-message--success" role="status">@SaveMessage</p>
-                            }
+                            <div class="moar-editor-preview__actions">
+                                <button type="button" class="moar-button" @onclick="SaveDraftAsync" disabled="@IsSaving">@(IsSaving ? "Saving…" : "Save definition")</button>
+                                @if (!IsCreating)
+                                {
+                                    <div class="moar-delete-action"><button type="button" class="moar-delete-button" @onclick="OpenDeleteConfirmation">Delete Stim</button></div>
+                                }
+                            </div>
+                            <div class="moar-editor-preview__status">
+                                @if (SaveErrors.Count > 0)
+                                {
+                                    <div class="moar-save-message moar-save-message--error" role="alert">
+                                        <strong>Could not save</strong>
+                                        <ul>@foreach (string error in SaveErrors) { <li>@error</li> }</ul>
+                                    </div>
+                                }
+                                else if (!string.IsNullOrWhiteSpace(SaveMessage))
+                                {
+                                    <p class="moar-save-message moar-save-message--success" role="status">@SaveMessage</p>
+                                }
+                            </div>
                         </aside>
                     </div>
                 }
@@ -149,9 +158,12 @@
 @code {
     [SupplyParameterFromQuery(Name = "stim")] public string? StimId { get; set; }
     [SupplyParameterFromQuery(Name = "drink")] public string? DrinkId { get; set; }
+    [SupplyParameterFromQuery(Name = "medicalPack")] public string? MedicalPackId { get; set; }
     private StimDefinition? Draft;
     private bool IsDrinkWorkspace;
     private bool CreateNewDrink;
+    private bool IsMedicalPackWorkspace;
+    private bool CreateNewMedicalPack;
     private bool IsCreating;
     private bool EffectPickerOpen;
     private bool IsSaving;
@@ -164,18 +176,22 @@
     private static readonly string[] AvailableEffects = ["aiming", "antidote", "assault", "attachedLauncher", "attention", "bodyTemperature", "charisma", "concussion", "covertMovement", "crafting", "damageModifier", "dmr", "endurance", "energyRate", "fieldMedicine", "firstAid", "fracture", "frostbite", "handsTremor", "health", "healthRate", "heavyBleeding", "heavyVests", "hearingDistance", "hideoutManagement", "hmg", "hydrationRate", "immunity", "intellect", "launcher", "lightBleeding", "lightVests", "lmg", "lockpicking", "magDrills", "maxStamina", "meleeDamage", "memory", "metabolism", "nightOps", "painSuppression", "perception", "pistol", "proneMovement", "quantumTunnelling", "recoilControl", "removeAllBloodLosses", "revolver", "search", "shotgun", "silentOps", "skillHealth", "smg", "sniper", "sniping", "sprintInertia", "staminaRate", "strength", "stressResistance", "surgery", "throwingStrength", "troubleshooting", "tunnelVision", "unknownToxin", "vitality", "weaponErgonomics", "weaponSpread", "weaponSwapSpeed", "weaponTreatment", "weightLimit", "zombieInfection"];
     private IReadOnlyList<AvailableTrader> AvailableTraders => TraderDirectory.GetAvailableTraders();
     private string SelectedTraderId => Draft?.Trader is null ? string.Empty : ResolveSelectedTraderId(Draft.Trader);
-    private bool IsGenericWorkspace => !IsDrinkWorkspace && string.IsNullOrWhiteSpace(StimId) && !IsCreating;
-    private string WorkspaceKicker => IsGenericWorkspace ? "SUPPLIES WORKSPACE" : IsDrinkWorkspace ? "DRINK WORKSPACE" : "STIM WORKSPACE";
+    private bool IsGenericWorkspace => !IsDrinkWorkspace && !IsMedicalPackWorkspace && string.IsNullOrWhiteSpace(StimId) && !IsCreating;
+    private string WorkspaceKicker => IsGenericWorkspace ? "SUPPLIES WORKSPACE" : IsDrinkWorkspace ? "DRINK WORKSPACE" : IsMedicalPackWorkspace ? "MEDICAL-PACK WORKSPACE" : "STIM WORKSPACE";
     private string WorkspaceDescription => IsGenericWorkspace
         ? "Choose a supply to create or edit, then customize it for your raid. Saved definitions are applied the next time the SPT server starts."
         : IsDrinkWorkspace
             ? "Build a drink from a familiar vanilla base. Saved definitions are applied the next time the SPT server starts."
+            : IsMedicalPackWorkspace
+                ? "Build a medical pack from a vanilla base. Surgical options appear only for surgical kits. Saved definitions are applied the next time the SPT server starts."
             : "Shape a stimulant with friendly controls. Saved definitions are applied the next time the SPT server starts.";
     private string EditorTitle => Draft is null
         ? "Modify Supplies"
         : IsCreating ? "Create stimulant" : $"Modify {Draft.Identity.Name}";
     private string WorkspaceTitle => IsDrinkWorkspace
         ? CreateNewDrink ? "Create drink" : string.IsNullOrWhiteSpace(DrinkId) ? "Modify drink" : "Modify drink"
+        : IsMedicalPackWorkspace
+            ? CreateNewMedicalPack ? "Create medical pack" : string.IsNullOrWhiteSpace(MedicalPackId) ? "Modify medical pack" : "Modify medical pack"
         : EditorTitle;
 
     protected override void OnParametersSet()
@@ -188,8 +204,19 @@
             return;
         }
 
+        if (!string.IsNullOrWhiteSpace(MedicalPackId))
+        {
+            IsMedicalPackWorkspace = true;
+            CreateNewMedicalPack = false;
+            IsDrinkWorkspace = false;
+            Draft = null;
+            return;
+        }
+
         IsDrinkWorkspace = false;
         CreateNewDrink = false;
+        IsMedicalPackWorkspace = false;
+        CreateNewMedicalPack = false;
         if (string.IsNullOrWhiteSpace(StimId))
         {
             if (!IsCreating)
@@ -228,6 +255,8 @@
     {
         IsDrinkWorkspace = false;
         CreateNewDrink = false;
+        IsMedicalPackWorkspace = false;
+        CreateNewMedicalPack = false;
         CreateDraft();
     }
 
@@ -236,6 +265,17 @@
         Draft = null;
         IsDrinkWorkspace = true;
         CreateNewDrink = true;
+        IsMedicalPackWorkspace = false;
+        CreateNewMedicalPack = false;
+    }
+
+    private void OpenMedicalPackCreator()
+    {
+        Draft = null;
+        IsDrinkWorkspace = false;
+        CreateNewDrink = false;
+        IsMedicalPackWorkspace = true;
+        CreateNewMedicalPack = true;
     }
 
     private void ToggleEffectPicker() => EffectPickerOpen = !EffectPickerOpen;

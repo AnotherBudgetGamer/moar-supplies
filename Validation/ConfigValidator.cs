@@ -69,7 +69,53 @@ public sealed partial class ConfigValidator
             ValidateDrink(drink, drinkIndex, definitionIds, errors);
         }
 
+        if (config.MedicalPacks is null)
+        {
+            errors.Add("Configuration field 'medicalPacks' is required.");
+            return errors;
+        }
+
+        for (int medicalPackIndex = 0; medicalPackIndex < config.MedicalPacks.Count; medicalPackIndex++)
+        {
+            MedicalPackDefinition? medicalPack = config.MedicalPacks[medicalPackIndex];
+            if (medicalPack is null)
+            {
+                errors.Add($"medicalPacks[{medicalPackIndex}] must be an object.");
+                continue;
+            }
+
+            ValidateMedicalPack(medicalPack, medicalPackIndex, definitionIds, errors);
+        }
+
         return errors;
+    }
+
+    private void ValidateMedicalPack(MedicalPackDefinition medicalPack, int medicalPackIndex, HashSet<string> definitionIds, List<string> errors)
+    {
+        string label = string.IsNullOrWhiteSpace(medicalPack.Id) ? $"medicalPacks[{medicalPackIndex}]" : $"Medical pack '{medicalPack.Id}'";
+        if (string.IsNullOrWhiteSpace(medicalPack.Id)) errors.Add($"{label}: field 'id' is required.");
+        else
+        {
+            if (!SafeStimId.IsMatch(medicalPack.Id)) errors.Add($"{label}: field 'id' must use lowercase letters, numbers, and single hyphens only.");
+            if (!definitionIds.Add(medicalPack.Id)) errors.Add($"{label}: field 'id' duplicates another definition ID.");
+        }
+
+        if (medicalPack.Identity is null) errors.Add($"{label}: field 'identity' is required.");
+        else
+        {
+            if (string.IsNullOrWhiteSpace(medicalPack.Identity.Name)) errors.Add($"{label}: field 'identity.name' is required.");
+            if (string.IsNullOrWhiteSpace(medicalPack.Identity.ShortName)) errors.Add($"{label}: field 'identity.shortName' is required.");
+            if (string.IsNullOrWhiteSpace(medicalPack.Identity.Description)) errors.Add($"{label}: field 'identity.description' is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(medicalPack.BaseItem)) errors.Add($"{label}: field 'baseItem' is required.");
+        else if (!ItemMappings.IsSupportedMedicalPack(medicalPack.BaseItem)) errors.Add($"{label}: field 'baseItem' value '{medicalPack.BaseItem}' is not supported.");
+        if (medicalPack.Resource < 0) errors.Add($"{label}: field 'resource' must be zero or greater.");
+        if (medicalPack.ResourceRate < 0) errors.Add($"{label}: field 'resourceRate' must be zero or greater.");
+        if (medicalPack.UseTimeMultiplier is double useTimeMultiplier && (!double.IsFinite(useTimeMultiplier) || useTimeMultiplier <= 0)) errors.Add($"{label}: field 'useTimeMultiplier' must be a finite number greater than zero when provided.");
+        if (medicalPack.SurgeryRestoreMultiplier is double surgeryRestoreMultiplier && (!double.IsFinite(surgeryRestoreMultiplier) || surgeryRestoreMultiplier <= 0)) errors.Add($"{label}: field 'surgeryRestoreMultiplier' must be a finite number greater than zero when provided.");
+        ValidateTags(medicalPack.Tags, label, errors);
+        ValidateTrader(medicalPack.Trader, label, errors);
     }
 
     private void ValidateDrink(DrinkDefinition drink, int drinkIndex, HashSet<string> definitionIds, List<string> errors)
@@ -251,6 +297,10 @@ public sealed partial class ConfigValidator
             if (buff.Duration < 0)
             {
                 errors.Add($"{buffLabel}.duration must be zero or greater.");
+            }
+            else if (buff.Duration > EffectDuration.MaximumSeconds)
+            {
+                errors.Add($"{buffLabel}.duration must not exceed {EffectDuration.MaximumSeconds} seconds (30 minutes).");
             }
 
             if (buff.Delay < 0)

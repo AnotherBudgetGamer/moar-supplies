@@ -1,0 +1,20 @@
+{
+  "id": "surv12-plus",
+  "enabled": true,
+  "identity": {
+    "name": "Moar Surv12",
+    "shortName": "M-Surv12",
+    "description": "A surgical kit with ten uses and 20% more restored limb health than the standard Surv12."
+  },
+  "baseItem": "surv12",
+  "resource": 10,
+  "resourceRate": 0,
+  "surgeryRestoreMultiplier": 1.2,
+  "tags": ["medical", "test", "surgery"],
+  "trader": {
+    "enabled": true,
+    "trader": "therapist",
+    "loyaltyLevel": 1,
+    "price": 80000
+  }
+}

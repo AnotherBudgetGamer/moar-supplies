@@ -1,0 +1,19 @@
+{
+  "id": "calok-b-plus",
+  "enabled": true,
+  "identity": {
+    "name": "Moar CALOK-B",
+    "shortName": "M-CALOK",
+    "description": "A CALOK-B hemostatic applicator with four treatments, up from the standard three."
+  },
+  "baseItem": "calok-b",
+  "resource": 4,
+  "resourceRate": 0,
+  "tags": ["medical", "test", "bleeding"],
+  "trader": {
+    "enabled": true,
+    "trader": "therapist",
+    "loyaltyLevel": 1,
+    "price": 12000
+  }
+}

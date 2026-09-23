@@ -1327,6 +1327,15 @@
   gap: 8px;
   margin: 19px 0;
 }
+.moar-editor-preview__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.moar-editor-preview__status {
+  min-height: 0;
+}
 .moar-editor-preview dl div {
   padding: 9px;
   border: 1px solid rgba(82, 88, 97, 0.5);
@@ -1467,9 +1476,6 @@
   padding-right: 174px;
 }
 .moar-delete-action {
-  position: absolute;
-  right: 22px;
-  bottom: 22px;
   display: flex;
   justify-content: flex-end;
 }
@@ -1539,8 +1545,7 @@
     padding-right: 17px;
   }
   .moar-delete-action {
-    position: static;
-    margin-top: 16px;
+    margin-left: auto;
   }
   .moar-delete-dialog {
     padding: 21px;

@@ -24,6 +24,14 @@ public sealed class BuffService
 
     public Buff Convert(BuffDefinition definition)
     {
+        if (definition.Duration is < 0 or > EffectDuration.MaximumSeconds)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(definition),
+                definition.Duration,
+                $"Effect duration must be between zero and {EffectDuration.MaximumSeconds} seconds.");
+        }
+
         if (!BuffMappings.TryGet(definition.Effect, out BuffMapping mapping))
         {
             throw new ArgumentException(

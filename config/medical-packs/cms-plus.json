@@ -1,0 +1,21 @@
+{
+  "id": "cms-plus",
+  "enabled": true,
+  "identity": {
+    "name": "Moar CMS",
+    "shortName": "M-CMS",
+    "description": "A compact surgical kit with four uses, 20% more limb restoration, and a surgery time reduced to half of the standard CMS."
+  },
+  "baseItem": "cms",
+  "resource": 4,
+  "resourceRate": 0,
+  "useTimeMultiplier": 0.5,
+  "surgeryRestoreMultiplier": 1.2,
+  "tags": ["medical", "test", "surgery"],
+  "trader": {
+    "enabled": true,
+    "trader": "therapist",
+    "loyaltyLevel": 1,
+    "price": 30000
+  }
+}

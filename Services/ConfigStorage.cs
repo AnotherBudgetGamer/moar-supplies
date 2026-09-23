@@ -17,6 +17,7 @@ public sealed class ConfigStorage
     private const string SettingsFileName = "settings.json";
     private const string StimDirectoryName = "stims";
     private const string DrinkDirectoryName = "drinks";
+    private const string MedicalPackDirectoryName = "medical-packs";
     private const string LegacyFileName = "stims.json";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -47,8 +48,12 @@ public sealed class ConfigStorage
         string[] drinkDefinitionPaths = Directory.Exists(drinkDirectory)
             ? Directory.GetFiles(drinkDirectory, "*.json", SearchOption.TopDirectoryOnly)
             : [];
+        string medicalPackDirectory = Path.Combine(configDirectory, MedicalPackDirectoryName);
+        string[] medicalPackDefinitionPaths = Directory.Exists(medicalPackDirectory)
+            ? Directory.GetFiles(medicalPackDirectory, "*.json", SearchOption.TopDirectoryOnly)
+            : [];
 
-        if (definitionPaths.Length == 0 && drinkDefinitionPaths.Length == 0)
+        if (definitionPaths.Length == 0 && drinkDefinitionPaths.Length == 0 && medicalPackDefinitionPaths.Length == 0)
         {
             string legacyPath = Path.Combine(configDirectory, LegacyFileName);
             if (!File.Exists(legacyPath))
@@ -90,7 +95,15 @@ public sealed class ConfigStorage
             }
         }
 
-        return new ConfigLoadResult(new ModConfig { Version = settings.Version, Debug = settings.Debug, Stims = stims, Drinks = drinks }, UsesLegacyFormat: false, configDirectory);
+        List<MedicalPackDefinition> medicalPacks = [];
+        foreach (string definitionPath in medicalPackDefinitionPaths.OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
+        {
+            MedicalPackDefinition? medicalPack = await DeserializeAsync<MedicalPackDefinition>(definitionPath, cancellationToken);
+            if (medicalPack is null) throw new InvalidDataException($"Medical-pack definition '{definitionPath}' could not be deserialized.");
+            medicalPacks.Add(medicalPack);
+        }
+
+        return new ConfigLoadResult(new ModConfig { Version = settings.Version, Debug = settings.Debug, Stims = stims, Drinks = drinks, MedicalPacks = medicalPacks }, UsesLegacyFormat: false, configDirectory);
     }
 
     public async Task<ConfigSaveResult> SaveAsync(StimDefinition definition, string? originalId, CancellationToken cancellationToken)
@@ -106,7 +119,7 @@ public sealed class ConfigStorage
             .ToList();
         updatedStims.Add(definition);
 
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = updatedStims, Drinks = current.Drinks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = updatedStims, Drinks = current.Drinks, MedicalPacks = current.MedicalPacks };
         IReadOnlyList<string> validationErrors = _configValidator.Validate(updatedConfig);
         if (validationErrors.Count > 0)
         {
@@ -134,7 +147,7 @@ public sealed class ConfigStorage
 
         List<DrinkDefinition> updatedDrinks = current.Drinks.Where(drink => !string.Equals(drink.Id, originalId, StringComparison.OrdinalIgnoreCase)).ToList();
         updatedDrinks.Add(definition);
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = updatedDrinks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = updatedDrinks, MedicalPacks = current.MedicalPacks };
         IReadOnlyList<string> validationErrors = _configValidator.Validate(updatedConfig);
         if (validationErrors.Count > 0) return ConfigSaveResult.Failure(validationErrors);
 
@@ -169,7 +182,7 @@ public sealed class ConfigStorage
         List<StimDefinition> remainingStims = current.Stims
             .Where(stim => !string.Equals(stim.Id, definition.Id, StringComparison.OrdinalIgnoreCase))
             .ToList();
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = remainingStims, Drinks = current.Drinks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = remainingStims, Drinks = current.Drinks, MedicalPacks = current.MedicalPacks };
 
         try
         {
@@ -203,6 +216,36 @@ public sealed class ConfigStorage
         return ConfigSaveResult.Success();
     }
 
+    public async Task<ConfigSaveResult> SaveMedicalPackAsync(MedicalPackDefinition definition, string? originalId, CancellationToken cancellationToken)
+    {
+        ModConfig? current = _configState.Current;
+        if (current is null) return ConfigSaveResult.Failure("A valid configuration must be loaded before a definition can be saved.");
+
+        List<MedicalPackDefinition> updatedMedicalPacks = current.MedicalPacks.Where(medicalPack => !string.Equals(medicalPack.Id, originalId, StringComparison.OrdinalIgnoreCase)).ToList();
+        updatedMedicalPacks.Add(definition);
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = current.Drinks, MedicalPacks = updatedMedicalPacks };
+        IReadOnlyList<string> validationErrors = _configValidator.Validate(updatedConfig);
+        if (validationErrors.Count > 0) return ConfigSaveResult.Failure(validationErrors);
+
+        try
+        {
+            await WriteSplitConfigurationAsync(updatedConfig, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(originalId) && !string.Equals(originalId, definition.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                string oldPath = Path.Combine(GetConfigDirectory(), MedicalPackDirectoryName, $"{originalId}.json");
+                if (File.Exists(oldPath)) File.Delete(oldPath);
+            }
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+        {
+            _logger.LogError(exception, "[MoarSupplies] Could not save medical pack '{MedicalPackId}'.", definition.Id);
+            return ConfigSaveResult.Failure("The definition could not be written. Check the server log and that the config folder is writable.");
+        }
+
+        _configState.Current = updatedConfig;
+        return ConfigSaveResult.Success();
+    }
+
     public async Task<ConfigSaveResult> DeleteDrinkAsync(string drinkId, CancellationToken cancellationToken)
     {
         ModConfig? current = _configState.Current;
@@ -215,7 +258,7 @@ public sealed class ConfigStorage
         List<DrinkDefinition> remainingDrinks = current.Drinks
             .Where(drink => !string.Equals(drink.Id, definition.Id, StringComparison.OrdinalIgnoreCase))
             .ToList();
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = remainingDrinks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = remainingDrinks, MedicalPacks = current.MedicalPacks };
 
         try
         {
@@ -242,6 +285,37 @@ public sealed class ConfigStorage
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
             _logger.LogError(exception, "[MoarSupplies] Could not delete drink '{DrinkId}'.", definition.Id);
+            return ConfigSaveResult.Failure("The definition could not be deleted. Check the server log and that the config folder is writable.");
+        }
+
+        _configState.Current = updatedConfig;
+        return ConfigSaveResult.Success();
+    }
+
+    public async Task<ConfigSaveResult> DeleteMedicalPackAsync(string medicalPackId, CancellationToken cancellationToken)
+    {
+        ModConfig? current = _configState.Current;
+        MedicalPackDefinition? definition = current?.MedicalPacks.FirstOrDefault(medicalPack => string.Equals(medicalPack.Id, medicalPackId, StringComparison.OrdinalIgnoreCase));
+        if (current is null || definition is null) return ConfigSaveResult.Failure("The selected definition could not be found.");
+
+        List<MedicalPackDefinition> remainingMedicalPacks = current.MedicalPacks.Where(medicalPack => !string.Equals(medicalPack.Id, definition.Id, StringComparison.OrdinalIgnoreCase)).ToList();
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = current.Drinks, MedicalPacks = remainingMedicalPacks };
+
+        try
+        {
+            string configDirectory = GetConfigDirectory();
+            string medicalPackDirectory = Path.Combine(configDirectory, MedicalPackDirectoryName);
+            Directory.CreateDirectory(medicalPackDirectory);
+
+            await WriteJsonAtomicallyAsync(Path.Combine(configDirectory, SettingsFileName), new ModSettings { Version = updatedConfig.Version, Debug = updatedConfig.Debug }, cancellationToken);
+            await WriteSplitConfigurationAsync(updatedConfig, cancellationToken);
+
+            string definitionPath = Path.Combine(medicalPackDirectory, $"{definition.Id}.json");
+            if (File.Exists(definitionPath)) File.Delete(definitionPath);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+        {
+            _logger.LogError(exception, "[MoarSupplies] Could not delete medical pack '{MedicalPackId}'.", definition.Id);
             return ConfigSaveResult.Failure("The definition could not be deleted. Check the server log and that the config folder is writable.");
         }
 
@@ -278,6 +352,12 @@ public sealed class ConfigStorage
         foreach (DrinkDefinition drink in config.Drinks)
         {
             await WriteJsonAtomicallyAsync(Path.Combine(drinkDirectory, $"{drink.Id}.json"), drink, cancellationToken);
+        }
+        string medicalPackDirectory = Path.Combine(configDirectory, MedicalPackDirectoryName);
+        Directory.CreateDirectory(medicalPackDirectory);
+        foreach (MedicalPackDefinition medicalPack in config.MedicalPacks)
+        {
+            await WriteJsonAtomicallyAsync(Path.Combine(medicalPackDirectory, $"{medicalPack.Id}.json"), medicalPack, cancellationToken);
         }
     }
 

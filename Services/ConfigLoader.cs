@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using MoarSupplies.Definitions;
 using MoarSupplies.Models;
 using MoarSupplies.Validation;
 using SPTarkov.DI.Annotations;
@@ -19,6 +20,7 @@ public sealed class ConfigLoader : IOnLoad
     private readonly ConfigStorage _configStorage;
     private readonly StimService _stimService;
     private readonly DrinkService _drinkService;
+    private readonly MedicalPackService _medicalPackService;
 
     public ConfigLoader(
         ILogger<ConfigLoader> logger,
@@ -27,7 +29,8 @@ public sealed class ConfigLoader : IOnLoad
         ConfigState configState,
         ConfigStorage configStorage,
         StimService stimService,
-        DrinkService drinkService)
+        DrinkService drinkService,
+        MedicalPackService medicalPackService)
     {
         _logger = logger;
         _configValidator = configValidator;
@@ -36,6 +39,7 @@ public sealed class ConfigLoader : IOnLoad
         _configStorage = configStorage;
         _stimService = stimService;
         _drinkService = drinkService;
+        _medicalPackService = medicalPackService;
     }
 
     public async Task OnLoadAsync(CancellationToken cancellationToken)
@@ -64,7 +68,7 @@ public sealed class ConfigLoader : IOnLoad
         IReadOnlyList<string> validationErrors = _configValidator.Validate(config);
         if (validationErrors.Count > 0)
         {
-            _logger.LogError("[MoarSupplies] Error loading {ErrorCount} definition validation error(s). No stims or drinks will be registered.", validationErrors.Count);
+            _logger.LogError("[MoarSupplies] Error loading {ErrorCount} definition validation error(s). No supplies will be registered.", validationErrors.Count);
 
             if (_debugSettings.Enabled)
             {
@@ -88,14 +92,28 @@ public sealed class ConfigLoader : IOnLoad
 
         _configState.Current = config;
         _logger.LogInformation("[MoarSupplies] Configuration loaded.");
-        _logger.LogInformation("[MoarSupplies] Loaded {StimCount} stim definition(s).", config.Stims.Count);
+        int totalDefinitionCount = config.Stims.Count + config.Drinks.Count + config.MedicalPacks.Count;
+        _logger.LogInformation("[MoarSupplies] Loaded {TotalDefinitionCount} total definition(s).", totalDefinitionCount);
+        if (_debugSettings.Enabled)
+        {
+            _logger.LogInformation("[MoarSupplies] Loaded {StimCount} stim definition(s).", config.Stims.Count);
+            _logger.LogInformation("[MoarSupplies] Loaded {DrinkCount} drink definition(s).", config.Drinks.Count);
+            _logger.LogInformation("[MoarSupplies] Loaded {MedicalPackCount} medical-pack definition(s).", config.MedicalPacks.Count);
+        }
 
         int createdStimCount = 0;
+        if (_debugSettings.Enabled)
+        {
+            _logger.LogInformation("[MoarSupplies] ===== Stimulant definitions =====");
+        }
         foreach (StimDefinition stim in config.Stims)
         {
             if (_debugSettings.Enabled)
             {
-                _logger.LogInformation("[MoarSupplies] Processing stim '{StimId}': {StimName}.", stim.Id, stim.Identity.Name);
+                ItemMappings.TryGet(stim.BaseItem, out BaseItemMapping baseItem);
+                _logger.LogInformation(
+                    "[MoarSupplies] Loading stim '{StimId}': name '{Name}', base '{BaseItem}' ({BaseTemplateId}), uses {Uses}, enabled {Enabled}, buffs {BuffCount}, tags [{Tags}], trader {Trader}.",
+                    stim.Id, stim.Identity.Name, stim.BaseItem, baseItem.TemplateId, stim.Uses, stim.Enabled, stim.Buffs.Count, DescribeTags(stim.Tags), DescribeTrader(stim.Trader));
             }
 
             if (!stim.Enabled)
@@ -123,9 +141,25 @@ public sealed class ConfigLoader : IOnLoad
         }
 
         int createdDrinkCount = 0;
+        if (_debugSettings.Enabled)
+        {
+            _logger.LogInformation("[MoarSupplies] ===== Drink definitions =====");
+        }
         foreach (DrinkDefinition drink in config.Drinks)
         {
-            if (!drink.Enabled) continue;
+            if (_debugSettings.Enabled)
+            {
+                ItemMappings.TryGetDrink(drink.BaseItem, out BaseItemMapping baseItem);
+                _logger.LogInformation(
+                    "[MoarSupplies] Loading drink '{DrinkId}': name '{Name}', base '{BaseItem}' ({BaseTemplateId}), resource {Resource}, hydration {Hydration}, energy {Energy}, enabled {Enabled}, buffs {BuffCount}, tags [{Tags}], trader {Trader}.",
+                    drink.Id, drink.Identity.Name, drink.BaseItem, baseItem.TemplateId, drink.Resource, drink.Nutrition.Hydration, drink.Nutrition.Energy, drink.Enabled, drink.Buffs.Count, DescribeTags(drink.Tags), DescribeTrader(drink.Trader));
+            }
+
+            if (!drink.Enabled)
+            {
+                if (_debugSettings.Enabled) _logger.LogInformation("[MoarSupplies] Drink '{DrinkId}' is disabled; registration was skipped.", drink.Id);
+                continue;
+            }
             if (!_drinkService.Register(drink))
             {
                 _logger.LogError("[MoarSupplies] Registration stopped after drink '{DrinkId}' failed.", drink.Id);
@@ -135,8 +169,43 @@ public sealed class ConfigLoader : IOnLoad
             createdDrinkCount++;
         }
 
+        int createdMedicalPackCount = 0;
+        if (_debugSettings.Enabled)
+        {
+            _logger.LogInformation("[MoarSupplies] ===== Medical-pack definitions =====");
+        }
+        foreach (MedicalPackDefinition medicalPack in config.MedicalPacks)
+        {
+            if (_debugSettings.Enabled)
+            {
+                ItemMappings.TryGetMedicalPack(medicalPack.BaseItem, out BaseItemMapping baseItem);
+                _logger.LogInformation(
+                    "[MoarSupplies] Loading medical pack '{MedicalPackId}': name '{Name}', base '{BaseItem}' ({BaseTemplateId}), resource {Resource}, resource rate {ResourceRate}, use-time multiplier {UseTimeMultiplier}, surgery-restoration multiplier {SurgeryRestoreMultiplier}, enabled {Enabled}, tags [{Tags}], trader {Trader}.",
+                    medicalPack.Id, medicalPack.Identity.Name, medicalPack.BaseItem, baseItem.TemplateId, medicalPack.Resource, medicalPack.ResourceRate, medicalPack.UseTimeMultiplier ?? 1, medicalPack.SurgeryRestoreMultiplier ?? 1, medicalPack.Enabled, DescribeTags(medicalPack.Tags), DescribeTrader(medicalPack.Trader));
+            }
+
+            if (!medicalPack.Enabled)
+            {
+                if (_debugSettings.Enabled) _logger.LogInformation("[MoarSupplies] Medical pack '{MedicalPackId}' is disabled; registration was skipped.", medicalPack.Id);
+                continue;
+            }
+            if (!_medicalPackService.Register(medicalPack))
+            {
+                _logger.LogError("[MoarSupplies] Registration stopped after medical pack '{MedicalPackId}' failed.", medicalPack.Id);
+                return;
+            }
+
+            createdMedicalPackCount++;
+        }
+
         _logger.LogInformation("[MoarSupplies] {StimCount} stim(s) created.", createdStimCount);
         _logger.LogInformation("[MoarSupplies] {DrinkCount} drink(s) created.", createdDrinkCount);
+        _logger.LogInformation("[MoarSupplies] {MedicalPackCount} medical pack(s) created.", createdMedicalPackCount);
     }
 
+    private static string DescribeTags(IEnumerable<string> tags) => tags.Any() ? string.Join(", ", tags) : "none";
+
+    private static string DescribeTrader(TraderDefinition? trader) => trader?.Enabled == true
+        ? $"{trader.Trader} (LL{trader.LoyaltyLevel}, {trader.Price} roubles)"
+        : "disabled";
 }

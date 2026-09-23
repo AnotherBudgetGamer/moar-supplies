@@ -15,11 +15,11 @@
                     <div>
                         <p class="moar-kicker">CURRENT CONFIGURATION</p>
                         <h1 id="moar-database-title">Supply database</h1>
-                        <p>Browse configured stims and drinks. Open an entry to inspect its effects, resource, and optional trader availability.</p>
+                        <p>Browse configured supplies. Open an entry to inspect its effects, resource, and trader availability. Every enabled item remains in world loot; trader availability only controls purchasing.</p>
                     </div>
                     @if (Config is not null)
                     {
-                        <span class="moar-database__count">@(Config.Stims.Count + Config.Drinks.Count) definition@(Config.Stims.Count + Config.Drinks.Count == 1 ? string.Empty : "s")</span>
+                        <span class="moar-database__count">@(Config.Stims.Count + Config.Drinks.Count + Config.MedicalPacks.Count) definition@(Config.Stims.Count + Config.Drinks.Count + Config.MedicalPacks.Count == 1 ? string.Empty : "s")</span>
                     }
                 </div>
 
@@ -30,16 +30,28 @@
                         <p>The database will populate after SPT loads a valid <code>config/stims.json</code>.</p>
                     </div>
                 }
-                else if (Config.Stims.Count == 0 && Config.Drinks.Count == 0)
+                else if (Config.Stims.Count == 0 && Config.Drinks.Count == 0 && Config.MedicalPacks.Count == 0)
                 {
                     <div class="moar-database__empty">
                         <strong>No supplies are configured</strong>
-                        <p>Create your first Moar Supplies stimulant or drink from the Modify workspace.</p>
+                        <p>Create your first Moar Supplies stimulant, drink, or medical pack from the Modify workspace.</p>
                     </div>
                 }
                 else
                 {
                     <div class="moar-database__groups">
+                        @if (Config.MedicalPacks.Count > 0)
+                        {
+                        <section class="moar-database__group">
+                            <header class="moar-database__group-heading"><p class="moar-kicker">MEDICAL PACKS</p><h2>Configured medical packs</h2></header>
+                            <ol class="moar-database-list">
+                                @foreach (MedicalPackDefinition medicalPack in Config.MedicalPacks.OrderBy(medicalPack => medicalPack.Identity.Name, StringComparer.OrdinalIgnoreCase))
+                                {
+                                    <li><details class="moar-stim-entry"><summary><span class="moar-stim-entry__identity"><strong>@medicalPack.Identity.Name</strong><small>@medicalPack.Identity.ShortName</small></span><span class="moar-stim-entry__tags">@foreach (string tag in medicalPack.Tags) { <small>@tag</small> }</span><span class="moar-stim-entry__description">@medicalPack.Identity.Description</span><span class="moar-stim-entry__actions"><span class="moar-stim-entry__toggle" aria-hidden="true">View details</span><a class="moar-button moar-button--secondary" href="@($"/moar-supplies/modify?medicalPack={Uri.EscapeDataString(medicalPack.Id)}")" @onclick:stopPropagation>Edit definition</a></span></summary><div class="moar-stim-entry__details"><p class="moar-stim-entry__profile-kicker moar-kicker">MEDICAL PROFILE</p><div class="moar-stim-entry__facts"><span><small>Base item</small><strong>@medicalPack.BaseItem</strong></span><span><small>Uses / pool</small><strong>@medicalPack.Resource</strong></span>@if (medicalPack.BaseItem is "cms" or "surv12") { <span><small>Use time</small><strong>@(medicalPack.UseTimeMultiplier is null ? "Base" : $"{medicalPack.UseTimeMultiplier:0.##}×")</strong></span><span><small>Limb restoration</small><strong>@(medicalPack.SurgeryRestoreMultiplier is null ? "Base" : $"{medicalPack.SurgeryRestoreMultiplier:0.##}×")</strong></span> } else { <span><small>Health per treatment</small><strong>@medicalPack.ResourceRate</strong></span> }<span><small>Availability</small><strong>@TraderLabel(medicalPack.Trader)</strong></span><span><small>Status</small><strong class="@(medicalPack.Enabled ? "moar-status-active" : "moar-status-disabled")">@(medicalPack.Enabled ? "Active" : "Disabled")</strong></span></div></div></details></li>
+                                }
+                            </ol>
+                        </section>
+                        }
                         @if (Config.Drinks.Count > 0)
                         {
                         <section class="moar-database__group">
@@ -138,7 +150,7 @@
 
     private static string TraderLabel(TraderDefinition? trader) => trader is { Enabled: true }
         ? $"{trader.Trader} · LL{trader.LoyaltyLevel} · {trader.Price:N0} ₽"
-        : "Not sold";
+        : "World loot only";
 
     private static string DisplayEffectName(string effect) => string.IsNullOrWhiteSpace(effect)
         ? "Unknown effect"

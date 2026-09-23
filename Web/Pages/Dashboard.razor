@@ -11,18 +11,18 @@
 
             <div class="moar-home-hero">
                 <div class="moar-home-hero__copy">
-                    <p class="moar-kicker">BUILD THE TARKOV YOU WANT TO PLAY</p>
-                    <h1>Stims should fit your raid—not dictate it.</h1>
-                    <p class="moar-home-lead">Moar Supplies makes configurable stimulants simple to understand and easy to control. View what each stim does, then add, remove, and tune effects without being locked into someone else’s preset.</p>
-                    <p class="moar-home-body">Keep it grounded, build a weightless endurance setup, or turn a hatchet run into a boss-hunting power trip. The point is not to limit your playstyle—it is to give you a clean way to make Tarkov a little more fun on your terms.</p>
+                    <p class="moar-kicker">BUILD THE RAID YOU WANT TO PLAY</p>
+                    <h1>Supplies should fit your raid—not dictate it.</h1>
+                    <p class="moar-home-lead">Moar Supplies gives you one clear workshop for configurable items. Choose a familiar base, review what it does, and tune its effects without being locked into someone else’s preset.</p>
+                    <p class="moar-home-body">Keep it grounded, build a lightweight endurance setup, or create the exact supplies your next raid calls for. The point is to give you a clean way to make each raid more fun on your terms.</p>
                 </div>
 
                 <aside class="moar-home-hero__panel" aria-label="What Moar Supplies lets you control">
                     <p class="moar-kicker">YOUR WORKSHOP</p>
                     <ul class="moar-control-list">
-                        <li><span aria-hidden="true">01</span><div><strong>Create stims</strong><small>Start with a familiar base item.</small></div></li>
+                        <li><span aria-hidden="true">01</span><div><strong>Create supplies</strong><small>Start with a familiar base item.</small></div></li>
                         <li><span aria-hidden="true">02</span><div><strong>Shape effects</strong><small>Mix benefits, tradeoffs, timing, and duration.</small></div></li>
-                        <li><span aria-hidden="true">03</span><div><strong>Set the rules</strong><small>Choose uses, trader access, price, and loyalty level.</small></div></li>
+                        <li><span aria-hidden="true">03</span><div><strong>Set availability</strong><small>World loot is automatic; choose trader access, price, and loyalty level.</small></div></li>
                     </ul>
                 </aside>
             </div>
@@ -30,13 +30,13 @@
             <section class="moar-guide" aria-labelledby="moar-guide-title">
                 <div class="moar-guide__heading">
                     <p class="moar-kicker">HOW IT WORKS</p>
-                    <h2 id="moar-guide-title">Make a stim in three clear steps.</h2>
+                    <h2 id="moar-guide-title">Make an item in three clear steps.</h2>
                     <p>The Modify workspace will guide every choice with friendly controls—no raw SPT identifiers required.</p>
                 </div>
                 <ol class="moar-step-list">
-                    <li><span class="moar-step-number">1</span><div><h3>Start with the identity</h3><p>Choose a base stim, give it a name and short name, and write the item description players will see.</p></div></li>
+                    <li><span class="moar-step-number">1</span><div><h3>Start with the identity</h3><p>Choose a base item, give it a name and short name, and write the description players will see.</p></div></li>
                     <li><span class="moar-step-number">2</span><div><h3>Build the effect profile</h3><p>Add or remove effects, then tune each value, duration, and delay to create the exact tradeoff you want.</p></div></li>
-                    <li><span class="moar-step-number">3</span><div><h3>Place it in your world</h3><p>Set uses and optional trader availability, then save a definition that fits your own Tarkov experience.</p></div></li>
+                    <li><span class="moar-step-number">3</span><div><h3>Place it in your world</h3><p>Every enabled item remains in world loot. Turn on trader availability only when you also want it available for purchase.</p></div></li>
                 </ol>
             </section>
         </section>
@@ -45,8 +45,8 @@
             <div class="moar-next__intro">
                 <div>
                     <p class="moar-kicker">UP NEXT</p>
-                    <h2 id="moar-next-title">From idea to stim library.</h2>
-                    <p>Pick a familiar base, shape the tradeoff, and save it. Your new stim is ready to find in the database.</p>
+                    <h2 id="moar-next-title">From idea to supply library.</h2>
+                    <p>Pick a familiar base, shape the tradeoff, and save it. Your new item is ready to find in the database.</p>
                 </div>
             </div>
             <div class="moar-next__cta">
@@ -56,24 +56,24 @@
 
             <ol class="moar-workflow">
                 <li class="moar-workflow__step moar-workflow__step--identity">
-                    <div class="moar-workflow__copy"><span class="moar-workflow__number">01</span><div><p>Start with a base</p><h3>Name your stim</h3></div></div>
-                    <button type="button" class="moar-workflow__frame moar-workflow__frame-button" @onclick='() => OpenScreenshot("/MoarSupplies/assets/stim-basics.png", "The Modify workspace showing base stim and identity controls")' aria-label="Expand the identity workspace screenshot"><img src="/MoarSupplies/assets/stim-basics.png" alt="The Modify workspace showing base stim and identity controls" /></button>
+                    <div class="moar-workflow__copy"><span class="moar-workflow__number">01</span><div><p>Start with a base</p><h3>Name your item</h3></div></div>
+                    <button type="button" class="moar-workflow__frame moar-workflow__frame-button" @onclick='() => OpenScreenshot("/MoarSupplies/assets/stim-basics.png", "The Modify workspace showing base item and identity controls")' aria-label="Expand the identity workspace screenshot"><img src="/MoarSupplies/assets/stim-basics.png" alt="The Modify workspace showing base item and identity controls" /></button>
                 </li>
                 <li class="moar-workflow__connector" aria-hidden="true"><span>+</span><svg viewBox="0 0 92 34" focusable="false"><path d="M3 17h72" /><path d="m65 7 17 10-17 10" /></svg></li>
                 <li class="moar-workflow__step moar-workflow__step--effects">
                     <div class="moar-workflow__copy"><span class="moar-workflow__number">02</span><div><p>Shape the profile</p><h3>Add the tradeoff</h3></div></div>
-                    <button type="button" class="moar-workflow__frame moar-workflow__frame-button" @onclick='() => OpenScreenshot("/MoarSupplies/assets/stim-effects.png", "Effect profile controls with selectable stimulant effects")' aria-label="Expand the effects workspace screenshot"><img src="/MoarSupplies/assets/stim-effects.png" alt="Effect profile controls with selectable stimulant effects" /></button>
+                    <button type="button" class="moar-workflow__frame moar-workflow__frame-button" @onclick='() => OpenScreenshot("/MoarSupplies/assets/stim-effects.png", "Effect profile controls with selectable item effects")' aria-label="Expand the effects workspace screenshot"><img src="/MoarSupplies/assets/stim-effects.png" alt="Effect profile controls with selectable item effects" /></button>
                 </li>
                 <li class="moar-workflow__connector" aria-hidden="true"><span>✓</span><svg viewBox="0 0 92 34" focusable="false"><path d="M3 17h72" /><path d="m65 7 17 10-17 10" /></svg></li>
                 <li class="moar-workflow__step moar-workflow__step--library">
                     <div class="moar-workflow__copy"><span class="moar-workflow__number">03</span><div><p>Save and play</p><h3>Find it in Database</h3></div></div>
-                    <button type="button" class="moar-workflow__frame moar-workflow__frame-button" @onclick='() => OpenScreenshot("/MoarSupplies/assets/database-details.png", "A saved stim displayed in the database with effects and trader availability")' aria-label="Expand the database screenshot"><img src="/MoarSupplies/assets/database-details.png" alt="A saved stim displayed in the database with effects and trader availability" /></button>
+                    <button type="button" class="moar-workflow__frame moar-workflow__frame-button" @onclick='() => OpenScreenshot("/MoarSupplies/assets/database-details.png", "A saved item displayed in the database with effects and trader availability")' aria-label="Expand the database screenshot"><img src="/MoarSupplies/assets/database-details.png" alt="A saved item displayed in the database with effects and trader availability" /></button>
                 </li>
             </ol>
 
             <section class="moar-effect-catalog" aria-labelledby="moar-effect-catalog-title">
                 <div class="moar-effect-catalog__heading">
-                    <div><p class="moar-kicker">YOUR EFFECT TOOLKIT</p><h3 id="moar-effect-catalog-title">Create your own stim with any effect.</h3></div>
+                    <div><p class="moar-kicker">YOUR EFFECT TOOLKIT</p><h3 id="moar-effect-catalog-title">Create your own items with any effect.</h3></div>
                     <p>Stack up the benefits your raid needs, or add a drawback to keep the recipe interesting. Every option is ready to choose in the builder.</p>
                 </div>
                 <div class="moar-effect-catalog__groups">

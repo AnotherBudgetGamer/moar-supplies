@@ -199,4 +199,105 @@ public sealed class ItemService
         }
         return true;
     }
+
+    /// <summary>
+    /// Creates a medical-kit clone while retaining all treatment-effect data from
+    /// the selected vanilla kit.
+    /// </summary>
+    public bool CreateMedicalPack(MedicalPackDefinition medicalPack, BaseItemMapping baseItem, StimRegistrationIds ids)
+    {
+        if (!_templateTable.Items.TryGetValue(baseItem.TemplateId, out TemplateItem? sourceItem))
+        {
+            _logger.LogError("[MoarSupplies] Base template '{TemplateId}' for medical pack '{MedicalPackId}' does not exist in SPT's item table.", baseItem.TemplateId, medicalPack.Id);
+            return false;
+        }
+
+        if (_templateTable.Items.ContainsKey(ids.ItemTemplateId))
+        {
+            _logger.LogError("[MoarSupplies] Generated item template ID '{ItemTemplateId}' for medical pack '{MedicalPackId}' is already registered.", ids.ItemTemplateId, medicalPack.Id);
+            return false;
+        }
+
+        bool addToHandbook = medicalPack.Trader?.Enabled == true;
+        HandbookItem? sourceHandbookItem = addToHandbook
+            ? _templateTable.Handbook.Items.FirstOrDefault(item => item.Id == baseItem.TemplateId)
+            : null;
+        if (addToHandbook && sourceHandbookItem is null)
+        {
+            _logger.LogError("[MoarSupplies] Base template '{TemplateId}' for medical pack '{MedicalPackId}' has no handbook entry.", baseItem.TemplateId, medicalPack.Id);
+            return false;
+        }
+
+        double? medUseTime = medicalPack.UseTimeMultiplier is double useTimeMultiplier
+            ? sourceItem.Properties?.MedUseTime * useTimeMultiplier
+            : null;
+        if (medicalPack.UseTimeMultiplier is not null && medUseTime is null)
+        {
+            _logger.LogError("[MoarSupplies] Medical pack '{MedicalPackId}' requests a use-time multiplier, but base item '{BaseTemplateId}' has no medical use time.", medicalPack.Id, baseItem.TemplateId);
+            return false;
+        }
+
+        Dictionary<DamageEffectType, EffectsDamageProperties>? surgeryEffects = null;
+        if (medicalPack.SurgeryRestoreMultiplier is double surgeryRestoreMultiplier)
+        {
+            Dictionary<DamageEffectType, EffectsDamageProperties>? sourceEffects = sourceItem.Properties?.EffectsDamage;
+            if (sourceEffects is null || !sourceEffects.TryGetValue(DamageEffectType.DestroyedPart, out EffectsDamageProperties? destroyedPart))
+            {
+                _logger.LogError("[MoarSupplies] Medical pack '{MedicalPackId}' requests a surgery-restoration multiplier, but base item '{BaseTemplateId}' cannot treat destroyed limbs.", medicalPack.Id, baseItem.TemplateId);
+                return false;
+            }
+
+            surgeryEffects = sourceEffects.ToDictionary(
+                effect => effect.Key,
+                effect => new EffectsDamageProperties
+                {
+                    Value = effect.Value.Value,
+                    Delay = effect.Value.Delay,
+                    Duration = effect.Value.Duration,
+                    FadeOut = effect.Value.FadeOut,
+                    Cost = effect.Value.Cost,
+                    HealthPenaltyMin = effect.Value.HealthPenaltyMin,
+                    HealthPenaltyMax = effect.Value.HealthPenaltyMax
+                });
+            surgeryEffects[DamageEffectType.DestroyedPart].HealthPenaltyMin = destroyedPart.HealthPenaltyMin * surgeryRestoreMultiplier;
+            surgeryEffects[DamageEffectType.DestroyedPart].HealthPenaltyMax = destroyedPart.HealthPenaltyMax * surgeryRestoreMultiplier;
+        }
+
+        NewItemFromCloneDetails cloneDetails = new()
+        {
+            ItemTplToClone = baseItem.TemplateId,
+            ParentId = sourceItem.Parent,
+            NewId = ids.ItemTemplateId,
+            NewItemName = medicalPack.Identity.Name,
+            AddToHandbook = addToHandbook,
+            AddToFleaPriceDb = false,
+            HandbookParentId = sourceHandbookItem?.ParentId.ToString() ?? string.Empty,
+            HandbookPriceRoubles = addToHandbook ? medicalPack.Trader!.Price : null,
+            Locales = new Dictionary<string, LocaleDetails>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["en"] = new LocaleDetails { Name = medicalPack.Identity.Name, ShortName = medicalPack.Identity.ShortName, Description = medicalPack.Identity.Description }
+            },
+            OverrideProperties = new TemplateItemProperties
+            {
+                MaxHpResource = medicalPack.Resource,
+                HpResourceRate = medicalPack.ResourceRate,
+                MedUseTime = medUseTime,
+                EffectsDamage = surgeryEffects
+            }
+        };
+
+        CreateItemResult result = _customItemService.CreateItemFromClone(cloneDetails, typeof(ItemService).Assembly);
+        if (!result.Success)
+        {
+            _logger.LogError("[MoarSupplies] Failed to create medical pack '{MedicalPackId}': {Errors}", medicalPack.Id, result.Errors is { Count: > 0 } ? string.Join("; ", result.Errors) : "SPT did not provide an error message.");
+            return false;
+        }
+
+        if (_debugSettings.Enabled)
+        {
+            _logger.LogInformation("[MoarSupplies] Created medical pack '{MedicalPackId}' with template ID '{ItemTemplateId}' from base template '{BaseTemplateId}'.", medicalPack.Id, result.ItemId, baseItem.TemplateId);
+        }
+
+        return true;
+    }
 }
