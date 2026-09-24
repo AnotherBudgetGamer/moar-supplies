@@ -293,11 +293,50 @@ public sealed class ItemService
             return false;
         }
 
+        PreserveDirectSlotEligibility(baseItem.TemplateId, ids.ItemTemplateId);
+
         if (_debugSettings.Enabled)
         {
             _logger.LogInformation("[MoarSupplies] Created medical pack '{MedicalPackId}' with template ID '{ItemTemplateId}' from base template '{BaseTemplateId}'.", medicalPack.Id, result.ItemId, baseItem.TemplateId);
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Preserves placement in slots whose filters list the vanilla template directly.
+    /// Special slots use these direct template-ID allow lists rather than item parents,
+    /// so a cloned CMS or Surv12 otherwise loses its native special-slot eligibility.
+    /// </summary>
+    private void PreserveDirectSlotEligibility(string sourceTemplateId, string cloneTemplateId)
+    {
+        int updatedFilterCount = 0;
+
+        foreach (TemplateItem template in _templateTable.Items.Values)
+        {
+            if (template.Properties?.Slots is null) continue;
+
+            foreach (Slot slot in template.Properties.Slots)
+            {
+                if (slot.Properties?.Filters is null) continue;
+
+                foreach (SlotFilter filter in slot.Properties.Filters)
+                {
+                    if (filter.Filter is null || !filter.Filter.Contains(sourceTemplateId)) continue;
+                    if (!filter.Filter.Add(cloneTemplateId)) continue;
+
+                    updatedFilterCount++;
+                }
+            }
+        }
+
+        if (_debugSettings.Enabled && updatedFilterCount > 0)
+        {
+            _logger.LogInformation(
+                "[MoarSupplies] Preserved direct slot eligibility for clone '{CloneTemplateId}' from source '{SourceTemplateId}' in {FilterCount} filter(s).",
+                cloneTemplateId,
+                sourceTemplateId,
+                updatedFilterCount);
+        }
     }
 }
