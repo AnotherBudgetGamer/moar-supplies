@@ -20,6 +20,7 @@ public sealed class ConfigLoader : IOnLoad
     private readonly ConfigStorage _configStorage;
     private readonly StimService _stimService;
     private readonly DrinkService _drinkService;
+    private readonly FoodService _foodService;
     private readonly MedicalPackService _medicalPackService;
 
     public ConfigLoader(
@@ -30,6 +31,7 @@ public sealed class ConfigLoader : IOnLoad
         ConfigStorage configStorage,
         StimService stimService,
         DrinkService drinkService,
+        FoodService foodService,
         MedicalPackService medicalPackService)
     {
         _logger = logger;
@@ -39,6 +41,7 @@ public sealed class ConfigLoader : IOnLoad
         _configStorage = configStorage;
         _stimService = stimService;
         _drinkService = drinkService;
+        _foodService = foodService;
         _medicalPackService = medicalPackService;
     }
 
@@ -92,12 +95,13 @@ public sealed class ConfigLoader : IOnLoad
 
         _configState.Current = config;
         _logger.LogInformation("[MoarSupplies] Configuration loaded.");
-        int totalDefinitionCount = config.Stims.Count + config.Drinks.Count + config.MedicalPacks.Count;
+        int totalDefinitionCount = config.Stims.Count + config.Drinks.Count + config.Foods.Count + config.MedicalPacks.Count;
         _logger.LogInformation("[MoarSupplies] Loaded {TotalDefinitionCount} total definition(s).", totalDefinitionCount);
         if (_debugSettings.Enabled)
         {
             _logger.LogInformation("[MoarSupplies] Loaded {StimCount} stim definition(s).", config.Stims.Count);
             _logger.LogInformation("[MoarSupplies] Loaded {DrinkCount} drink definition(s).", config.Drinks.Count);
+            _logger.LogInformation("[MoarSupplies] Loaded {FoodCount} food definition(s).", config.Foods.Count);
             _logger.LogInformation("[MoarSupplies] Loaded {MedicalPackCount} medical-pack definition(s).", config.MedicalPacks.Count);
         }
 
@@ -170,6 +174,28 @@ public sealed class ConfigLoader : IOnLoad
         }
 
         int createdMedicalPackCount = 0;
+        int createdFoodCount = 0;
+        if (_debugSettings.Enabled) _logger.LogInformation("[MoarSupplies] ===== Food definitions =====");
+        foreach (FoodDefinition food in config.Foods)
+        {
+            if (_debugSettings.Enabled)
+            {
+                ItemMappings.TryGetFood(food.BaseItem, out BaseItemMapping baseItem);
+                _logger.LogInformation("[MoarSupplies] Loading food '{FoodId}': name '{Name}', base '{BaseItem}' ({BaseTemplateId}), resource {Resource}, hydration {Hydration}, energy {Energy}, enabled {Enabled}, tags [{Tags}], trader {Trader}.", food.Id, food.Identity.Name, food.BaseItem, baseItem.TemplateId, food.Resource, food.Nutrition.Hydration, food.Nutrition.Energy, food.Enabled, DescribeTags(food.Tags), DescribeTrader(food.Trader));
+            }
+            if (!food.Enabled)
+            {
+                if (_debugSettings.Enabled) _logger.LogInformation("[MoarSupplies] Food '{FoodId}' is disabled; registration was skipped.", food.Id);
+                continue;
+            }
+            if (!_foodService.Register(food))
+            {
+                _logger.LogError("[MoarSupplies] Registration stopped after food '{FoodId}' failed.", food.Id);
+                return;
+            }
+            createdFoodCount++;
+        }
+
         if (_debugSettings.Enabled)
         {
             _logger.LogInformation("[MoarSupplies] ===== Medical-pack definitions =====");
@@ -200,6 +226,7 @@ public sealed class ConfigLoader : IOnLoad
 
         _logger.LogInformation("[MoarSupplies] {StimCount} stim(s) created.", createdStimCount);
         _logger.LogInformation("[MoarSupplies] {DrinkCount} drink(s) created.", createdDrinkCount);
+        _logger.LogInformation("[MoarSupplies] {FoodCount} food item(s) created.", createdFoodCount);
         _logger.LogInformation("[MoarSupplies] {MedicalPackCount} medical pack(s) created.", createdMedicalPackCount);
     }
 

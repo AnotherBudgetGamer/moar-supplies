@@ -1,0 +1,54 @@
+@using MoarSupplies.Definitions
+@using MoarSupplies.Models
+@using MoarSupplies.Services
+@inject ConfigState ConfigState
+@inject ConfigStorage ConfigStorage
+@inject NavigationManager NavigationManager
+@inject TraderDirectory TraderDirectory
+
+@if (Draft is not null)
+{
+    <div class="moar-modify__layout">
+        <form class="moar-editor" aria-label="Food editor" @onsubmit:preventDefault>
+            <section class="moar-editor__section">
+                <div class="moar-editor__section-heading"><p class="moar-kicker">BASE FOOD</p><h2>Start with vanilla food</h2><p>The base supplies the in-game model, sound, and eating behavior.</p></div>
+                <div class="moar-form-grid">
+                    <label>Base food<select @bind="Draft.BaseItem">@foreach (string item in BaseItems) { <option value="@item">@DisplayName(item)</option> }</select></label>
+                    <label><span>Resource <small class="moar-field-description">Total consumable pool</small></span><input type="number" min="1" @bind="Draft.Resource" /></label>
+                    <label>Hydration<input type="number" step="any" @bind="Draft.Nutrition.Hydration" /></label>
+                    <label>Energy<input type="number" step="any" @bind="Draft.Nutrition.Energy" /></label>
+                </div>
+            </section>
+            <section class="moar-editor__section">
+                <div class="moar-editor__section-heading"><p class="moar-kicker">IDENTITY</p><h2>Name your food</h2></div>
+                <div class="moar-form-grid">
+                    <label>ID<input @bind="Draft.Id" /></label><label>Name<input @bind="Draft.Identity.Name" /></label><label>Short name<input @bind="Draft.Identity.ShortName" /></label><label>Description<input @bind="Draft.Identity.Description" /></label><label>Tags (comma-separated)<input @bind="TagsText" /></label><label class="moar-status-field"><span class="moar-status-field__label">@(Draft.Enabled ? "Enabled" : "Disabled")</span><span class="moar-status-toggle"><input type="checkbox" @bind="Draft.Enabled" /><span class="moar-status-toggle__control" aria-hidden="true"></span><span class="moar-status-toggle__description">Register this food in-game</span></span></label>
+                </div>
+            </section>
+            <section class="moar-editor__section">
+                <div class="moar-editor__section-heading"><p class="moar-kicker">AVAILABILITY</p><h2>Set trader availability</h2><p>Every enabled item remains in world loot. This setting only controls whether it can be purchased from a trader.</p></div>
+                <div class="moar-form-grid"><label class="moar-status-field"><span class="moar-status-field__label">@(Draft.Trader!.Enabled ? "Enabled" : "Disabled")</span><span class="moar-status-toggle"><input type="checkbox" @bind="Draft.Trader!.Enabled" /><span class="moar-status-toggle__control" aria-hidden="true"></span><span class="moar-status-toggle__description">Make this food purchasable</span></span></label>@if (Draft.Trader!.Enabled) { <label>Trader<select value="@SelectedTraderId" @onchange="SelectTrader">@foreach (AvailableTrader trader in AvailableTraders) { <option value="@trader.Id">@trader.DisplayName</option> }</select></label><label>Loyalty level<select @bind="Draft.Trader!.LoyaltyLevel">@foreach (int level in Enumerable.Range(1, 4)) { <option value="@level">Level @level</option> }</select></label><label>Price<input type="number" min="1" @bind="Draft.Trader!.Price" /></label> }</div>
+            </section>
+        </form>
+        <aside class="moar-editor-preview" aria-label="Food preview"><p class="moar-kicker">LIVE PREVIEW</p><h2>@Draft.Identity.Name</h2><span>@Draft.Identity.ShortName</span><p>@Draft.Identity.Description</p><dl><div><dt>Base food</dt><dd>@DisplayName(Draft.BaseItem)</dd></div><div><dt>Resource</dt><dd>@Draft.Resource</dd></div><div><dt>Hydration</dt><dd>@Draft.Nutrition.Hydration</dd></div><div><dt>Energy</dt><dd>@Draft.Nutrition.Energy</dd></div></dl><div class="moar-editor-preview__actions"><button type="button" class="moar-button" @onclick="SaveDraftAsync" disabled="@IsSaving">@(IsSaving ? "Saving…" : "Save food")</button>@if (!IsCreating) { <button type="button" class="moar-delete-button" @onclick="DeleteDraftAsync" disabled="@IsDeleting">@(IsDeleting ? "Deleting…" : "Delete Food")</button> }</div><div class="moar-editor-preview__status">@if (SaveErrors.Count > 0) { <div class="moar-save-message moar-save-message--error" role="alert"><strong>Could not save</strong><ul>@foreach (string error in SaveErrors) { <li>@error</li> }</ul></div> } else if (!string.IsNullOrWhiteSpace(SaveMessage)) { <p class="moar-save-message moar-save-message--success">@SaveMessage</p> }</div></aside>
+    </div>
+}
+else { <div class="moar-database__empty"><strong>No food selected</strong><p>Create a new food, or choose one from the <a href="/moar-supplies/database">database</a>.</p></div> }
+
+@code {
+    [Parameter] public string? FoodId { get; set; }
+    [Parameter] public bool CreateNew { get; set; }
+    private FoodDefinition? Draft;
+    private bool IsCreating; private bool IsSaving; private bool IsDeleting; private string? SaveMessage; private List<string> SaveErrors = [];
+    private static readonly string[] BaseItems = ["alyonka", "army-crackers", "condensed-milk", "emelya-rye-croutons", "herring", "humpback-salmon", "instant-noodles", "iskra-lunch-box", "izhora-sprats", "jar-of-devildog-mayo", "large-beef-stew", "mre", "pack-of-oat-flakes", "peas", "salty-dog-sausage", "saury", "slickers", "small-beef-stew", "squash-spread", "sugar", "tarker-dried-meat", "rye-croutons"];
+    private IReadOnlyList<AvailableTrader> AvailableTraders => TraderDirectory.GetAvailableTraders();
+    private string TagsText { get => Draft is null ? string.Empty : string.Join(", ", Draft.Tags); set { if (Draft is not null) Draft.Tags = value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList(); } }
+    private string SelectedTraderId => Draft?.Trader is null ? string.Empty : (!string.IsNullOrWhiteSpace(Draft.Trader.TraderId) ? Draft.Trader.TraderId : TraderDirectory.TryResolve(Draft.Trader, out string id) ? id : string.Empty);
+    protected override void OnParametersSet() { if (CreateNew && !IsCreating) { Draft = new FoodDefinition { Enabled = true, BaseItem = BaseItems[0], Resource = 1, Nutrition = new DrinkNutrition { Energy = 1 }, Trader = CreateDefaultTrader() }; IsCreating = true; SaveErrors = []; return; } if (string.IsNullOrWhiteSpace(FoodId)) { if (!IsCreating) Draft = null; return; } FoodDefinition? source = ConfigState.Current?.Foods.FirstOrDefault(food => string.Equals(food.Id, FoodId, StringComparison.OrdinalIgnoreCase)); Draft = source is null ? null : Copy(source); IsCreating = false; SaveErrors = []; }
+    private TraderDefinition CreateDefaultTrader() { AvailableTrader? trader = AvailableTraders.FirstOrDefault(); return trader is null ? new TraderDefinition { LoyaltyLevel = 1 } : new TraderDefinition { Trader = trader.DisplayName, TraderId = trader.Id, LoyaltyLevel = 1 }; }
+    private void SelectTrader(ChangeEventArgs changeEvent) { if (Draft?.Trader is null || changeEvent.Value is not string traderId) return; AvailableTrader? trader = AvailableTraders.FirstOrDefault(candidate => string.Equals(candidate.Id, traderId, StringComparison.OrdinalIgnoreCase)); if (trader is not null) { Draft.Trader.Trader = trader.DisplayName; Draft.Trader.TraderId = trader.Id; } }
+    private async Task SaveDraftAsync() { if (Draft is null || IsSaving) return; IsSaving = true; SaveMessage = null; SaveErrors = []; ConfigSaveResult result = await ConfigStorage.SaveFoodAsync(Draft, IsCreating ? null : FoodId, CancellationToken.None); IsSaving = false; SaveErrors = result.Errors.ToList(); if (result.Succeeded) { IsCreating = false; FoodId = Draft.Id; SaveMessage = "Saved to config/foods. Restart the SPT server to apply this definition in-game."; } }
+    private async Task DeleteDraftAsync() { if (Draft is null || string.IsNullOrWhiteSpace(FoodId) || IsCreating || IsDeleting) return; IsDeleting = true; ConfigSaveResult result = await ConfigStorage.DeleteFoodAsync(FoodId, CancellationToken.None); IsDeleting = false; SaveErrors = result.Errors.ToList(); if (result.Succeeded) NavigationManager.NavigateTo("/moar-supplies/database"); }
+    private static string DisplayName(string value) => System.Text.RegularExpressions.Regex.Replace(value.Replace('-', ' '), "(?<!^)([A-Z])", " $1");
+    private static FoodDefinition Copy(FoodDefinition source) => new() { Id = source.Id, Enabled = source.Enabled, BaseItem = source.BaseItem, Resource = source.Resource, Nutrition = new DrinkNutrition { Hydration = source.Nutrition.Hydration, Energy = source.Nutrition.Energy }, Tags = [.. source.Tags], Identity = new StimIdentity { Name = source.Identity.Name, ShortName = source.Identity.ShortName, Description = source.Identity.Description }, Trader = source.Trader is null ? new TraderDefinition() : new TraderDefinition { Enabled = source.Trader.Enabled, Trader = source.Trader.Trader, TraderId = source.Trader.TraderId, LoyaltyLevel = source.Trader.LoyaltyLevel, Price = source.Trader.Price } };
+}

@@ -9,5 +9,6 @@ public sealed class ModConfig
     public bool Debug { get; set; }
     public List<StimDefinition> Stims { get; set; } = [];
     public List<DrinkDefinition> Drinks { get; set; } = [];
+    public List<FoodDefinition> Foods { get; set; } = [];
     public List<MedicalPackDefinition> MedicalPacks { get; set; } = [];
 }

@@ -1123,6 +1123,12 @@
   font-size: 0.72rem;
   font-weight: 750;
 }
+.moar-form-grid .moar-field-description {
+  color: #a1a1aa;
+  font-size: 0.66rem;
+  font-weight: 600;
+  line-height: inherit;
+}
 .moar-effect-fields label > span {
   color: #71717a;
   font-size: 0.64rem;
@@ -1361,6 +1367,33 @@
   flex: 0 0 auto;
   justify-items: end;
   gap: 8px;
+}
+.moar-supply-type-picker {
+  display: grid;
+  gap: 4px;
+  color: #a1a1aa;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.moar-supply-type-picker select {
+  min-width: 165px;
+  padding: 8px 30px 8px 11px;
+  border: 1px solid rgba(250, 204, 21, 0.52);
+  border-radius: 6px;
+  background: #18181b;
+  color: #facc15;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.moar-supply-type-picker select:focus {
+  border-color: #facc15;
+  outline: 2px solid rgba(250, 204, 21, 0.24);
+  outline-offset: 2px;
 }
 .moar-add-stim {
   padding: 8px 11px;

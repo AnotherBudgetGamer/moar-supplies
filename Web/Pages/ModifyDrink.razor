@@ -57,7 +57,7 @@
     private List<string> SaveErrors = [];
     private List<string> DeleteErrors = [];
     private static readonly string[] BaseItems = ["aquamari", "apple-juice", "emergency-water-ration", "grand-juice", "hot-rod", "ice-green-tea", "kvass", "max-energy", "milk", "moonshine", "pevko", "pineapple-juice", "purified-water", "ratcola", "tarcola", "tarkovskaya-vodka", "vita-juice", "water", "whiskey"];
-    private static readonly string[] AvailableEffects = ["aiming", "antidote", "assault", "attention", "bodyTemperature", "concussion", "damageModifier", "endurance", "energyRate", "handsTremor", "healthRate", "hydrationRate", "maxStamina", "painSuppression", "staminaRate", "stressResistance", "weightLimit"];
+    private static readonly string[] AvailableEffects = ["aiming", "antidote", "assault", "attention", "bodyTemperature", "concussion", "damageModifier", "endurance", "energyRate", "handsTremor", "healthRate", "hydrationRate", "maxStamina", "pain", "staminaRate", "stressResistance", "weightLimit"];
     private IReadOnlyList<AvailableTrader> AvailableTraders => TraderDirectory.GetAvailableTraders();
     private string SelectedTraderId => Draft?.Trader is null ? string.Empty : ResolveSelectedTraderId(Draft.Trader);
     private string EditorTitle => Draft is null ? "Modify drink" : IsCreating ? "Create drink" : $"Modify {Draft.Identity.Name}";

@@ -92,8 +92,9 @@ public sealed class ItemService
             },
             OverrideProperties = new TemplateItemProperties
             {
-                StimulatorBuffs = ids.BuffKey,
-                MaxHpResource = stim.Uses
+                StimulatorBuffs = stim.Buffs.Any(buff => BuffMappings.IsStimulatorBuff(buff.Effect)) ? ids.BuffKey : string.Empty,
+                MaxHpResource = stim.Uses,
+                EffectsDamage = CreateDirectStimEffects(stim)
             }
         };
 
@@ -120,6 +121,24 @@ public sealed class ItemService
                 baseItem.TemplateId);
         }
         return true;
+    }
+
+    private static Dictionary<DamageEffectType, EffectsDamageProperties>? CreateDirectStimEffects(StimDefinition stim)
+    {
+        BuffDefinition? painSuppression = stim.Buffs.FirstOrDefault(buff =>
+            BuffMappings.TryGet(buff.Effect, out BuffMapping mapping)
+            && mapping.ItemEffectType == ItemEffectType.PainSuppression);
+        if (painSuppression is null) return null;
+
+        return new Dictionary<DamageEffectType, EffectsDamageProperties>
+        {
+            [DamageEffectType.Pain] = new()
+            {
+                Delay = painSuppression.Delay,
+                Duration = painSuppression.Duration,
+                FadeOut = 0
+            }
+        };
     }
 
     /// <summary>
@@ -197,6 +216,50 @@ public sealed class ItemService
                 result.ItemId,
                 baseItem.TemplateId);
         }
+        return true;
+    }
+
+    /// <summary>Creates a custom food item while retaining its vanilla eating behavior.</summary>
+    public bool CreateFood(FoodDefinition food, BaseItemMapping baseItem, StimRegistrationIds ids)
+    {
+        if (!_templateTable.Items.TryGetValue(baseItem.TemplateId, out TemplateItem? sourceItem))
+        {
+            _logger.LogError("[MoarSupplies] Base template '{TemplateId}' for food '{FoodId}' does not exist in SPT's item table.", baseItem.TemplateId, food.Id);
+            return false;
+        }
+        if (_templateTable.Items.ContainsKey(ids.ItemTemplateId))
+        {
+            _logger.LogError("[MoarSupplies] Generated item template ID '{ItemTemplateId}' for food '{FoodId}' is already registered.", ids.ItemTemplateId, food.Id);
+            return false;
+        }
+
+        bool addToHandbook = food.Trader?.Enabled == true;
+        HandbookItem? sourceHandbookItem = addToHandbook ? _templateTable.Handbook.Items.FirstOrDefault(item => item.Id == baseItem.TemplateId) : null;
+        if (addToHandbook && sourceHandbookItem is null)
+        {
+            _logger.LogError("[MoarSupplies] Base template '{TemplateId}' for food '{FoodId}' has no handbook entry.", baseItem.TemplateId, food.Id);
+            return false;
+        }
+
+        Dictionary<HealthFactor, EffectsHealthProperties> nutrition = new();
+        if (food.Nutrition.Hydration != 0) nutrition.Add(HealthFactor.Hydration, new EffectsHealthProperties { Value = food.Nutrition.Hydration });
+        if (food.Nutrition.Energy != 0) nutrition.Add(HealthFactor.Energy, new EffectsHealthProperties { Value = food.Nutrition.Energy });
+
+        NewItemFromCloneDetails cloneDetails = new()
+        {
+            ItemTplToClone = baseItem.TemplateId, ParentId = sourceItem.Parent, NewId = ids.ItemTemplateId, NewItemName = food.Identity.Name,
+            AddToHandbook = addToHandbook, AddToFleaPriceDb = false, HandbookParentId = sourceHandbookItem?.ParentId.ToString() ?? string.Empty,
+            HandbookPriceRoubles = addToHandbook ? food.Trader!.Price : null,
+            Locales = new Dictionary<string, LocaleDetails>(StringComparer.OrdinalIgnoreCase) { ["en"] = new LocaleDetails { Name = food.Identity.Name, ShortName = food.Identity.ShortName, Description = food.Identity.Description } },
+            OverrideProperties = new TemplateItemProperties { MaxResource = food.Resource, EffectsHealth = nutrition }
+        };
+        CreateItemResult result = _customItemService.CreateItemFromClone(cloneDetails, typeof(ItemService).Assembly);
+        if (!result.Success)
+        {
+            _logger.LogError("[MoarSupplies] Failed to create food '{FoodId}': {Errors}", food.Id, result.Errors is { Count: > 0 } ? string.Join("; ", result.Errors) : "SPT did not provide an error message.");
+            return false;
+        }
+        if (_debugSettings.Enabled) _logger.LogInformation("[MoarSupplies] Created food '{FoodId}' with template ID '{ItemTemplateId}' from base template '{BaseTemplateId}'.", food.Id, result.ItemId, baseItem.TemplateId);
         return true;
     }
 

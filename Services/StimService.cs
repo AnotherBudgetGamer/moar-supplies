@@ -62,6 +62,8 @@ public sealed class StimService
         List<Buff> buffs = [];
         for (int buffIndex = 0; buffIndex < stim.Buffs.Count; buffIndex++)
         {
+            if (!BuffMappings.IsStimulatorBuff(stim.Buffs[buffIndex].Effect)) continue;
+
             Buff buff = _buffService.Convert(stim.Buffs[buffIndex]);
             buffs.Add(buff);
 
@@ -85,7 +87,7 @@ public sealed class StimService
             return false;
         }
 
-        _buffService.Register(ids.BuffKey, buffs);
+        if (buffs.Count > 0) _buffService.Register(ids.BuffKey, buffs);
         if (_debugSettings.Enabled)
         {
             _logger.LogInformation(

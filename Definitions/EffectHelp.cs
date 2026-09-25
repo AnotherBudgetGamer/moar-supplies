@@ -23,6 +23,7 @@ public static class EffectHelp
         ["maxStamina"] = "Changes the maximum stamina pool. Positive values add stamina; negative values remove it.",
         ["lightBleeding"] = "Applies light bleeding. This effect has no value; duration controls how long the condition lasts.",
         ["meleeDamage"] = "Changes melee damage. Positive values increase damage; negative values reduce it.",
+        ["pain"] = "Applies pain. This effect has no value; duration controls how long pain lasts.",
         ["painSuppression"] = "Suppresses pain. This effect has no value; duration controls how long pain is suppressed.",
         ["recoilControl"] = "Changes recoil control. Positive values make recoil harder to control; negative values make it easier.",
         ["removeAllBloodLosses"] = "Removes all bleeding effects. This effect has no value; it is applied when the stimulant takes effect.",

@@ -16,6 +16,9 @@ public sealed class BaseItemResolver
     public bool TryResolveDrink(string baseItem, out BaseItemMapping mapping) =>
         ItemMappings.TryGetDrink(baseItem, out mapping);
 
+    public bool TryResolveFood(string baseItem, out BaseItemMapping mapping) =>
+        ItemMappings.TryGetFood(baseItem, out mapping);
+
     public bool TryResolveMedicalPack(string baseItem, out BaseItemMapping mapping) =>
         ItemMappings.TryGetMedicalPack(baseItem, out mapping);
 }

@@ -19,7 +19,7 @@
                     </div>
                     @if (Config is not null)
                     {
-                        <span class="moar-database__count">@(Config.Stims.Count + Config.Drinks.Count + Config.MedicalPacks.Count) definition@(Config.Stims.Count + Config.Drinks.Count + Config.MedicalPacks.Count == 1 ? string.Empty : "s")</span>
+                        <span class="moar-database__count">@(Config.Stims.Count + Config.Drinks.Count + Config.Foods.Count + Config.MedicalPacks.Count) definition@(Config.Stims.Count + Config.Drinks.Count + Config.Foods.Count + Config.MedicalPacks.Count == 1 ? string.Empty : "s")</span>
                     }
                 </div>
 
@@ -30,16 +30,28 @@
                         <p>The database will populate after SPT loads a valid <code>config/stims.json</code>.</p>
                     </div>
                 }
-                else if (Config.Stims.Count == 0 && Config.Drinks.Count == 0 && Config.MedicalPacks.Count == 0)
+                else if (Config.Stims.Count == 0 && Config.Drinks.Count == 0 && Config.Foods.Count == 0 && Config.MedicalPacks.Count == 0)
                 {
                     <div class="moar-database__empty">
                         <strong>No supplies are configured</strong>
-                        <p>Create your first Moar Supplies stimulant, drink, or medical pack from the Modify workspace.</p>
+                        <p>Create your first Moar Supplies stimulant, drink, food item, or medical pack from the Modify workspace.</p>
                     </div>
                 }
                 else
                 {
                     <div class="moar-database__groups">
+                        @if (Config.Foods.Count > 0)
+                        {
+                        <section class="moar-database__group">
+                            <header class="moar-database__group-heading"><p class="moar-kicker">FOOD</p><h2>Configured food</h2></header>
+                            <ol class="moar-database-list">
+                                @foreach (FoodDefinition food in Config.Foods.OrderBy(food => food.Identity.Name, StringComparer.OrdinalIgnoreCase))
+                                {
+                                    <li><details class="moar-stim-entry"><summary><span class="moar-stim-entry__identity"><strong>@food.Identity.Name</strong><small>@food.Identity.ShortName</small></span><span class="moar-stim-entry__tags">@foreach (string tag in food.Tags) { <small>@tag</small> }</span><span class="moar-stim-entry__description">@food.Identity.Description</span><span class="moar-stim-entry__actions"><span class="moar-stim-entry__toggle" aria-hidden="true">View details</span><a class="moar-button moar-button--secondary" href="@($"/moar-supplies/modify?food={Uri.EscapeDataString(food.Id)}")" @onclick:stopPropagation>Edit definition</a></span></summary><div class="moar-stim-entry__details"><p class="moar-stim-entry__profile-kicker moar-kicker">FOOD PROFILE</p><div class="moar-stim-entry__facts"><span><small>Base food</small><strong>@food.BaseItem</strong></span><span><small>Resource</small><strong>@food.Resource</strong></span><span><small>Hydration</small><strong>@food.Nutrition.Hydration</strong></span><span><small>Energy</small><strong>@food.Nutrition.Energy</strong></span><span><small>Availability</small><strong>@TraderLabel(food.Trader)</strong></span></div></div></details></li>
+                                }
+                            </ol>
+                        </section>
+                        }
                         @if (Config.MedicalPacks.Count > 0)
                         {
                         <section class="moar-database__group">

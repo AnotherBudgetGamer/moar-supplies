@@ -39,6 +39,11 @@ public sealed class BuffService
                 nameof(definition));
         }
 
+        if (mapping.ItemEffectType != ItemEffectType.None)
+        {
+            throw new ArgumentException($"Effect '{definition.Effect}' is applied directly by the item and cannot be converted to a stimulant buff.", nameof(definition));
+        }
+
         if (mapping.RequiresValue && definition.Value is null)
         {
             throw new ArgumentException(

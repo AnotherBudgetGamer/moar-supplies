@@ -34,6 +34,9 @@ public sealed class TraderService
     public bool Register(DrinkDefinition drink, StimRegistrationIds ids)
         => Register(drink.Id, drink.Trader, ids, new UpdResource { Value = drink.Resource }, "drink");
 
+    public bool Register(FoodDefinition food, StimRegistrationIds ids)
+        => Register(food.Id, food.Trader, ids, new UpdResource { Value = food.Resource }, "food");
+
     public bool Register(MedicalPackDefinition medicalPack, StimRegistrationIds ids)
         => Register(medicalPack.Id, medicalPack.Trader, ids, new UpdMedKit { HpResource = medicalPack.Resource }, "medical pack");
 

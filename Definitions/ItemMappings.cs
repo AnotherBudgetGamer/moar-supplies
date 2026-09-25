@@ -67,6 +67,37 @@ public static class ItemMappings
     public static bool TryGetDrink(string baseItem, out BaseItemMapping mapping) =>
         SupportedDrinks.TryGetValue(baseItem, out mapping!);
 
+    private static readonly Dictionary<string, BaseItemMapping> SupportedFoods = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["alyonka"] = new("57505f6224597709a92585a9"),
+        ["army-crackers"] = new("5448ff904bdc2d6f028b456e"),
+        ["large-beef-stew"] = new("57347da92459774491567cf5"),
+        ["rye-croutons"] = new("57347d3d245977448f7b7f61"),
+        ["small-beef-stew"] = new("57347d7224597744596b4e72"),
+        ["condensed-milk"] = new("5734773724597737fd047c14"),
+        ["emelya-rye-croutons"] = new("5751487e245977207e26a315"),
+        ["herring"] = new("57347d9c245977448b40fa85"),
+        ["humpback-salmon"] = new("57347d5f245977448b40fa81"),
+        ["izhora-sprats"] = new("5bc9c29cd4351e003562b8a3"),
+        ["jar-of-devildog-mayo"] = new("5bc9b156d4351e00367fbce9"),
+        ["mre"] = new("590c5f0d86f77413997acfab"),
+        ["pack-of-oat-flakes"] = new("57347d90245977448f7b7f65"),
+        ["peas"] = new("57347d692459774491567cf1"),
+        ["iskra-lunch-box"] = new("590c5d4b86f774784e1b9c45"),
+        ["instant-noodles"] = new("656df4fec921ad01000481a2"),
+        ["slickers"] = new("544fb6cc4bdc2d34748b456e"),
+        ["salty-dog-sausage"] = new("635a758bfefc88a93f021b8a"),
+        ["saury"] = new("5673de654bdc2d180f8b456d"),
+        ["squash-spread"] = new("57347d8724597744596b4e76"),
+        ["sugar"] = new("59e3577886f774176a362503"),
+        ["tarker-dried-meat"] = new("65815f0e647e3d7246384e14")
+    };
+
+    public static bool IsSupportedFood(string baseItem) => SupportedFoods.ContainsKey(baseItem);
+
+    public static bool TryGetFood(string baseItem, out BaseItemMapping mapping) =>
+        SupportedFoods.TryGetValue(baseItem, out mapping!);
+
     private static readonly Dictionary<string, BaseItemMapping> SupportedMedicalPacks = new(StringComparer.OrdinalIgnoreCase)
     {
         ["afak"] = new("60098ad7c2240c0fe85c570a"),

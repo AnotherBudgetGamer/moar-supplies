@@ -10,7 +10,7 @@
     <AssemblyName>MoarSupplies</AssemblyName>
     <RootNamespace>MoarSupplies</RootNamespace>
     <ModAuthor>AnotherBudgetGamer</ModAuthor>
-    <Version>0.7.0</Version>
+    <Version>0.8.0</Version>
     <OutputPath>bin\$(Configuration)\$(ModAuthor)-$(AssemblyName)\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <SptRuntimeDirectory Condition="'$(SptRuntimeDirectory)' == ''">$(MSBuildThisFileDirectory)..\..\SPP\SPP-Tarkov\SPT_Runtime\</SptRuntimeDirectory>

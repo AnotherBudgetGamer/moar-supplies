@@ -21,9 +21,7 @@
                         <p>@WorkspaceDescription</p>
                     </div>
                     <div class="moar-modify__actions">
-                        <button type="button" class="moar-add-stim" @onclick="OpenStimCreator"><span aria-hidden="true">+</span> Add Stim</button>
-                        <button type="button" class="moar-add-stim" @onclick="OpenDrinkCreator"><span aria-hidden="true">+</span> Add Drink</button>
-                        <button type="button" class="moar-add-stim" @onclick="OpenMedicalPackCreator"><span aria-hidden="true">+</span> Add Medical Pack</button>
+                        <label class="moar-supply-type-picker"><span>Add supply type</span><select value="@SelectedSupplyType" @onchange="SelectSupplyType"><option value="">-</option><option value="stim">Stim</option><option value="drink">Drink</option><option value="food">Food</option><option value="medical-pack">Medical pack</option></select></label>
                         <span class="moar-prototype-badge">One file per definition</span>
                     </div>
                 </div>
@@ -31,6 +29,10 @@
                 @if (IsDrinkWorkspace)
                 {
                     <ModifyDrink @key="DrinkId" DrinkId="@DrinkId" CreateNew="CreateNewDrink" />
+                }
+                else if (IsFoodWorkspace)
+                {
+                    <ModifyFood @key="FoodId" FoodId="@FoodId" CreateNew="CreateNewFood" />
                 }
                 else if (IsMedicalPackWorkspace)
                 {
@@ -40,7 +42,7 @@
                 {
                     <div class="moar-database__empty">
                         <strong>No definition selected</strong>
-                        <p>Choose a supply from the <a href="/moar-supplies/database">database</a>, or use the creation options above to start a new one.</p>
+                        <p>Choose a supply type above to create one, or select an existing supply from the <a href="/moar-supplies/database">database</a>.</p>
                     </div>
                 }
                 else
@@ -158,13 +160,17 @@
 @code {
     [SupplyParameterFromQuery(Name = "stim")] public string? StimId { get; set; }
     [SupplyParameterFromQuery(Name = "drink")] public string? DrinkId { get; set; }
+    [SupplyParameterFromQuery(Name = "food")] public string? FoodId { get; set; }
     [SupplyParameterFromQuery(Name = "medicalPack")] public string? MedicalPackId { get; set; }
     private StimDefinition? Draft;
     private bool IsDrinkWorkspace;
     private bool CreateNewDrink;
+    private bool IsFoodWorkspace;
+    private bool CreateNewFood;
     private bool IsMedicalPackWorkspace;
     private bool CreateNewMedicalPack;
     private bool IsCreating;
+    private string SelectedSupplyType = string.Empty;
     private bool EffectPickerOpen;
     private bool IsSaving;
     private bool IsDeleting;
@@ -173,15 +179,17 @@
     private List<string> SaveErrors = [];
     private List<string> DeleteErrors = [];
     private static readonly string[] BaseItems = ["2a2btg", "3btg", "adrenaline", "ahf1m", "etgchange", "l1", "meldonin", "mule", "obdolbos", "obdolbos2", "p22", "perfotoran", "pnb", "propital", "sj1", "sj6", "sj9", "sj12", "trimadol", "xtg12", "zagustin", "morphine"];
-    private static readonly string[] AvailableEffects = ["aiming", "antidote", "assault", "attachedLauncher", "attention", "bodyTemperature", "charisma", "concussion", "covertMovement", "crafting", "damageModifier", "dmr", "endurance", "energyRate", "fieldMedicine", "firstAid", "fracture", "frostbite", "handsTremor", "health", "healthRate", "heavyBleeding", "heavyVests", "hearingDistance", "hideoutManagement", "hmg", "hydrationRate", "immunity", "intellect", "launcher", "lightBleeding", "lightVests", "lmg", "lockpicking", "magDrills", "maxStamina", "meleeDamage", "memory", "metabolism", "nightOps", "painSuppression", "perception", "pistol", "proneMovement", "quantumTunnelling", "recoilControl", "removeAllBloodLosses", "revolver", "search", "shotgun", "silentOps", "skillHealth", "smg", "sniper", "sniping", "sprintInertia", "staminaRate", "strength", "stressResistance", "surgery", "throwingStrength", "troubleshooting", "tunnelVision", "unknownToxin", "vitality", "weaponErgonomics", "weaponSpread", "weaponSwapSpeed", "weaponTreatment", "weightLimit", "zombieInfection"];
+    private static readonly string[] AvailableEffects = ["aiming", "antidote", "assault", "attachedLauncher", "attention", "bodyTemperature", "charisma", "concussion", "covertMovement", "crafting", "damageModifier", "dmr", "endurance", "energyRate", "fieldMedicine", "firstAid", "fracture", "frostbite", "handsTremor", "health", "healthRate", "heavyBleeding", "heavyVests", "hearingDistance", "hideoutManagement", "hmg", "hydrationRate", "immunity", "intellect", "launcher", "lightBleeding", "lightVests", "lmg", "lockpicking", "magDrills", "maxStamina", "meleeDamage", "memory", "metabolism", "nightOps", "pain", "painSuppression", "perception", "pistol", "proneMovement", "quantumTunnelling", "recoilControl", "removeAllBloodLosses", "revolver", "search", "shotgun", "silentOps", "skillHealth", "smg", "sniper", "sniping", "sprintInertia", "staminaRate", "strength", "stressResistance", "surgery", "throwingStrength", "troubleshooting", "tunnelVision", "unknownToxin", "vitality", "weaponErgonomics", "weaponSpread", "weaponSwapSpeed", "weaponTreatment", "weightLimit", "zombieInfection"];
     private IReadOnlyList<AvailableTrader> AvailableTraders => TraderDirectory.GetAvailableTraders();
     private string SelectedTraderId => Draft?.Trader is null ? string.Empty : ResolveSelectedTraderId(Draft.Trader);
-    private bool IsGenericWorkspace => !IsDrinkWorkspace && !IsMedicalPackWorkspace && string.IsNullOrWhiteSpace(StimId) && !IsCreating;
-    private string WorkspaceKicker => IsGenericWorkspace ? "SUPPLIES WORKSPACE" : IsDrinkWorkspace ? "DRINK WORKSPACE" : IsMedicalPackWorkspace ? "MEDICAL-PACK WORKSPACE" : "STIM WORKSPACE";
+    private bool IsGenericWorkspace => !IsDrinkWorkspace && !IsFoodWorkspace && !IsMedicalPackWorkspace && string.IsNullOrWhiteSpace(StimId) && !IsCreating;
+    private string WorkspaceKicker => IsGenericWorkspace ? "SUPPLIES WORKSPACE" : IsDrinkWorkspace ? "DRINK WORKSPACE" : IsFoodWorkspace ? "FOOD WORKSPACE" : IsMedicalPackWorkspace ? "MEDICAL-PACK WORKSPACE" : "STIM WORKSPACE";
     private string WorkspaceDescription => IsGenericWorkspace
         ? "Choose a supply to create or edit, then customize it for your raid. Saved definitions are applied the next time the SPT server starts."
         : IsDrinkWorkspace
             ? "Build a drink from a familiar vanilla base. Saved definitions are applied the next time the SPT server starts."
+            : IsFoodWorkspace
+                ? "Build food from a familiar vanilla base. Saved definitions are applied the next time the SPT server starts."
             : IsMedicalPackWorkspace
                 ? "Build a medical pack from a vanilla base. Surgical options appear only for surgical kits. Saved definitions are applied the next time the SPT server starts."
             : "Shape a stimulant with friendly controls. Saved definitions are applied the next time the SPT server starts.";
@@ -190,6 +198,8 @@
         : IsCreating ? "Create stimulant" : $"Modify {Draft.Identity.Name}";
     private string WorkspaceTitle => IsDrinkWorkspace
         ? CreateNewDrink ? "Create drink" : string.IsNullOrWhiteSpace(DrinkId) ? "Modify drink" : "Modify drink"
+        : IsFoodWorkspace
+            ? CreateNewFood ? "Create food" : string.IsNullOrWhiteSpace(FoodId) ? "Modify food" : "Modify food"
         : IsMedicalPackWorkspace
             ? CreateNewMedicalPack ? "Create medical pack" : string.IsNullOrWhiteSpace(MedicalPackId) ? "Modify medical pack" : "Modify medical pack"
         : EditorTitle;
@@ -204,17 +214,29 @@
             return;
         }
 
+        if (!string.IsNullOrWhiteSpace(FoodId))
+        {
+            IsFoodWorkspace = true;
+            CreateNewFood = false;
+            IsDrinkWorkspace = false;
+            Draft = null;
+            return;
+        }
+
         if (!string.IsNullOrWhiteSpace(MedicalPackId))
         {
             IsMedicalPackWorkspace = true;
             CreateNewMedicalPack = false;
             IsDrinkWorkspace = false;
+            IsFoodWorkspace = false;
             Draft = null;
             return;
         }
 
         IsDrinkWorkspace = false;
         CreateNewDrink = false;
+        IsFoodWorkspace = false;
+        CreateNewFood = false;
         IsMedicalPackWorkspace = false;
         CreateNewMedicalPack = false;
         if (string.IsNullOrWhiteSpace(StimId))
@@ -255,9 +277,12 @@
     {
         IsDrinkWorkspace = false;
         CreateNewDrink = false;
+        IsFoodWorkspace = false;
+        CreateNewFood = false;
         IsMedicalPackWorkspace = false;
         CreateNewMedicalPack = false;
         CreateDraft();
+        SelectedSupplyType = "stim";
     }
 
     private void OpenDrinkCreator()
@@ -265,8 +290,23 @@
         Draft = null;
         IsDrinkWorkspace = true;
         CreateNewDrink = true;
+        IsFoodWorkspace = false;
+        CreateNewFood = false;
         IsMedicalPackWorkspace = false;
         CreateNewMedicalPack = false;
+        SelectedSupplyType = "drink";
+    }
+
+    private void OpenFoodCreator()
+    {
+        Draft = null;
+        IsDrinkWorkspace = false;
+        CreateNewDrink = false;
+        IsFoodWorkspace = true;
+        CreateNewFood = true;
+        IsMedicalPackWorkspace = false;
+        CreateNewMedicalPack = false;
+        SelectedSupplyType = "food";
     }
 
     private void OpenMedicalPackCreator()
@@ -274,8 +314,40 @@
         Draft = null;
         IsDrinkWorkspace = false;
         CreateNewDrink = false;
+        IsFoodWorkspace = false;
+        CreateNewFood = false;
         IsMedicalPackWorkspace = true;
         CreateNewMedicalPack = true;
+        SelectedSupplyType = "medical-pack";
+    }
+
+    private void SelectSupplyType(ChangeEventArgs changeEvent)
+    {
+        string supplyType = changeEvent.Value?.ToString() ?? string.Empty;
+        if (string.IsNullOrEmpty(supplyType))
+        {
+            SelectedSupplyType = string.Empty;
+            Draft = null;
+            IsCreating = false;
+            IsDrinkWorkspace = false;
+            CreateNewDrink = false;
+            IsFoodWorkspace = false;
+            CreateNewFood = false;
+            IsMedicalPackWorkspace = false;
+            CreateNewMedicalPack = false;
+            EffectPickerOpen = false;
+            SaveMessage = null;
+            SaveErrors = [];
+            return;
+        }
+
+        switch (supplyType)
+        {
+            case "stim": OpenStimCreator(); break;
+            case "drink": OpenDrinkCreator(); break;
+            case "food": OpenFoodCreator(); break;
+            case "medical-pack": OpenMedicalPackCreator(); break;
+        }
     }
 
     private void ToggleEffectPicker() => EffectPickerOpen = !EffectPickerOpen;

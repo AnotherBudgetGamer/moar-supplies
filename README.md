@@ -157,6 +157,12 @@ Definitions are loaded as a complete set. If any definition is invalid, Moar Sup
 
 `aquamari`, `apple-juice`, `emergency-water-ration`, `grand-juice`, `hot-rod`, `ice-green-tea`, `kvass`, `max-energy`, `milk`, `moonshine`, `pevko`, `pineapple-juice`, `purified-water`, `ratcola`, `tarcola`, `tarkovskaya-vodka`, `vita-juice`, `water`, and `whiskey`.
 
+### Food
+
+Food definitions live in `config/foods/` and follow the drink workflow: choose a vanilla food base, resource, hydration and energy, identity, tags, and optional trader availability. Food deliberately has no timed-effect editor.
+
+Supported food bases: `alyonka`, `army-crackers`, `condensed-milk`, `emelya-rye-croutons`, `herring`, `humpback-salmon`, `instant-noodles`, `iskra-lunch-box`, `izhora-sprats`, `jar-of-devildog-mayo`, `large-beef-stew`, `mre`, `pack-of-oat-flakes`, `peas`, `rye-croutons`, `salty-dog-sausage`, `saury`, `slickers`, `small-beef-stew`, `squash-spread`, `sugar`, and `tarker-dried-meat`.
+
 ### Medical packs
 
 Medical-pack definitions live in `config/medical-packs/`. They clone the base item's treatment behavior (including what it can treat) and expose only the two values that are safe to tune independently:
@@ -198,11 +204,13 @@ The workshop presents the available effects. JSON authors can use the friendly e
 <details>
 <summary>Show effect keys</summary>
 
-`aiming`, `antidote`, `assault`, `attachedLauncher`, `attention`, `bodyTemperature`, `charisma`, `concussion`, `covertMovement`, `crafting`, `damageModifier`, `dmr`, `endurance`, `energyRate`, `fieldMedicine`, `firstAid`, `fracture`, `frostbite`, `handsTremor`, `health`, `healthRate`, `heavyBleeding`, `heavyVests`, `hearingDistance`, `hideoutManagement`, `hmg`, `hydrationRate`, `immunity`, `intellect`, `launcher`, `lightBleeding`, `lightVests`, `lmg`, `lockpicking`, `magDrills`, `maxStamina`, `meleeDamage`, `memory`, `metabolism`, `nightOps`, `painSuppression`, `perception`, `pistol`, `proneMovement`, `quantumTunnelling`, `recoilControl`, `removeAllBloodLosses`, `revolver`, `search`, `shotgun`, `silentOps`, `skillHealth`, `smg`, `sniper`, `sniping`, `sprintInertia`, `staminaRate`, `strength`, `stressResistance`, `surgery`, `throwingStrength`, `troubleshooting`, `tunnelVision`, `unknownToxin`, `vitality`, `weaponErgonomics`, `weaponSpread`, `weaponSwapSpeed`, `weaponTreatment`, `weightLimit`, and `zombieInfection`.
+`aiming`, `antidote`, `assault`, `attachedLauncher`, `attention`, `bodyTemperature`, `charisma`, `concussion`, `covertMovement`, `crafting`, `damageModifier`, `dmr`, `endurance`, `energyRate`, `fieldMedicine`, `firstAid`, `fracture`, `frostbite`, `handsTremor`, `health`, `healthRate`, `heavyBleeding`, `heavyVests`, `hearingDistance`, `hideoutManagement`, `hmg`, `hydrationRate`, `immunity`, `intellect`, `launcher`, `lightBleeding`, `lightVests`, `lmg`, `lockpicking`, `magDrills`, `maxStamina`, `meleeDamage`, `memory`, `metabolism`, `nightOps`, `pain`, `painSuppression`, `perception`, `pistol`, `proneMovement`, `quantumTunnelling`, `recoilControl`, `removeAllBloodLosses`, `revolver`, `search`, `shotgun`, `silentOps`, `skillHealth`, `smg`, `sniper`, `sniping`, `sprintInertia`, `staminaRate`, `strength`, `stressResistance`, `surgery`, `throwingStrength`, `troubleshooting`, `tunnelVision`, `unknownToxin`, `vitality`, `weaponErgonomics`, `weaponSpread`, `weaponSwapSpeed`, `weaponTreatment`, `weightLimit`, and `zombieInfection`.
 
 </details>
 
 Some status effects do not take a `value`; the workshop handles this automatically. For JSON, omit `value` for `antidote`, `concussion`, `fracture`, `frostbite`, `heavyBleeding`, `lightBleeding`, `painSuppression`, `removeAllBloodLosses`, `tunnelVision`, `quantumTunnelling`, and `unknownToxin`.
+
+`painSuppression` is a stimulant-only direct item effect, matching vanilla morphine. `pain` is separate and deliberately applies the harmful pain condition.
 
 ## Included supplies
 
@@ -227,6 +235,8 @@ Check whether its `enabled` field is still `true`. Also avoid changing a definit
 Version 1.0 focuses on a stable, user-editable catalog of vanilla-base supplies: medical kits, surgery kits, bleeding treatments, splints, balms, consumables, drinks, and stimulants. The supported editing controls preserve the selected vanilla item's native use behavior.
 
 After 1.0, the first experimental track is **cross-item timed effects**. This would test attaching Moar Supplies buffs and debuffs to item classes that do not normally use them—for example, a bandage that applies a short health-regeneration effect after treating bleeding. It is intentionally deferred because each medical item type must be validated in raid for client behavior, resource consumption, animations, effects timing, and profile safety before it can be considered stable.
+
+The 1.0+ workshop roadmap also includes a **stim-definition backup/export** option, so users can easily copy their custom stim definitions somewhere safe before making changes. A companion **delete all shipped stims** control will let users remove the full set of default Moar Supplies stimulants at once when they prefer not to use them.
 
 Experimental effects will remain opt-in and clearly labeled until they have been tested across the supported item families.
 

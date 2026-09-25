@@ -69,6 +69,18 @@ public sealed partial class ConfigValidator
             ValidateDrink(drink, drinkIndex, definitionIds, errors);
         }
 
+        if (config.Foods is null)
+        {
+            errors.Add("Configuration field 'foods' is required.");
+            return errors;
+        }
+        for (int foodIndex = 0; foodIndex < config.Foods.Count; foodIndex++)
+        {
+            FoodDefinition? food = config.Foods[foodIndex];
+            if (food is null) { errors.Add($"foods[{foodIndex}] must be an object."); continue; }
+            ValidateFood(food, foodIndex, definitionIds, errors);
+        }
+
         if (config.MedicalPacks is null)
         {
             errors.Add("Configuration field 'medicalPacks' is required.");
@@ -143,8 +155,25 @@ public sealed partial class ConfigValidator
         else if (!double.IsFinite(drink.Nutrition.Hydration) || !double.IsFinite(drink.Nutrition.Energy)) errors.Add($"{label}: nutrition values must be finite numbers.");
         if (drink.Nutrition is not null && drink.Nutrition.Hydration == 0 && drink.Nutrition.Energy == 0 && (drink.Buffs is null || drink.Buffs.Count == 0)) errors.Add($"{label}: requires nutrition or at least one timed effect.");
         ValidateTags(drink.Tags, label, errors);
-        ValidateBuffs(drink.Buffs, label, errors);
+        ValidateBuffs(drink.Buffs, label, errors, supportsDirectItemEffects: false);
         ValidateTrader(drink.Trader, label, errors);
+    }
+
+    private void ValidateFood(FoodDefinition food, int foodIndex, HashSet<string> definitionIds, List<string> errors)
+    {
+        string label = string.IsNullOrWhiteSpace(food.Id) ? $"foods[{foodIndex}]" : $"Food '{food.Id}'";
+        if (string.IsNullOrWhiteSpace(food.Id)) errors.Add($"{label}: field 'id' is required.");
+        else { if (!SafeStimId.IsMatch(food.Id)) errors.Add($"{label}: field 'id' must use lowercase letters, numbers, and single hyphens only."); if (!definitionIds.Add(food.Id)) errors.Add($"{label}: field 'id' duplicates another definition ID."); }
+        if (food.Identity is null) errors.Add($"{label}: field 'identity' is required.");
+        else { if (string.IsNullOrWhiteSpace(food.Identity.Name)) errors.Add($"{label}: field 'identity.name' is required."); if (string.IsNullOrWhiteSpace(food.Identity.ShortName)) errors.Add($"{label}: field 'identity.shortName' is required."); if (string.IsNullOrWhiteSpace(food.Identity.Description)) errors.Add($"{label}: field 'identity.description' is required."); }
+        if (string.IsNullOrWhiteSpace(food.BaseItem)) errors.Add($"{label}: field 'baseItem' is required.");
+        else if (!ItemMappings.IsSupportedFood(food.BaseItem)) errors.Add($"{label}: field 'baseItem' value '{food.BaseItem}' is not supported.");
+        if (food.Resource <= 0) errors.Add($"{label}: field 'resource' must be greater than zero.");
+        if (food.Nutrition is null) errors.Add($"{label}: field 'nutrition' is required.");
+        else if (!double.IsFinite(food.Nutrition.Hydration) || !double.IsFinite(food.Nutrition.Energy)) errors.Add($"{label}: nutrition values must be finite numbers.");
+        if (food.Nutrition is not null && food.Nutrition.Hydration == 0 && food.Nutrition.Energy == 0) errors.Add($"{label}: requires hydration or energy nutrition.");
+        ValidateTags(food.Tags, label, errors);
+        ValidateTrader(food.Trader, label, errors);
     }
 
     private void ValidateStim(StimDefinition stim, int stimIndex, HashSet<string> stimIds, List<string> errors)
@@ -253,9 +282,9 @@ public sealed partial class ConfigValidator
         }
     }
 
-    private static void ValidateBuffs(StimDefinition stim, string label, List<string> errors) => ValidateBuffs(stim.Buffs, label, errors);
+    private static void ValidateBuffs(StimDefinition stim, string label, List<string> errors) => ValidateBuffs(stim.Buffs, label, errors, supportsDirectItemEffects: true);
 
-    private static void ValidateBuffs(List<BuffDefinition>? buffs, string label, List<string> errors)
+    private static void ValidateBuffs(List<BuffDefinition>? buffs, string label, List<string> errors, bool supportsDirectItemEffects)
     {
         if (buffs is null)
         {
@@ -263,6 +292,7 @@ public sealed partial class ConfigValidator
             return;
         }
 
+        HashSet<ItemEffectType> directItemEffects = [];
         for (int buffIndex = 0; buffIndex < buffs.Count; buffIndex++)
         {
             BuffDefinition? buff = buffs[buffIndex];
@@ -287,6 +317,14 @@ public sealed partial class ConfigValidator
             else if (mapping.RequiresValue && buff.Value is null)
             {
                 errors.Add($"{buffLabel}.value is required for effect '{buff.Effect}'.");
+            }
+            else if (!supportsDirectItemEffects && mapping.ItemEffectType != ItemEffectType.None)
+            {
+                errors.Add($"{buffLabel}.effect '{buff.Effect}' is only supported on stimulants.");
+            }
+            else if (mapping.ItemEffectType != ItemEffectType.None && !directItemEffects.Add(mapping.ItemEffectType))
+            {
+                errors.Add($"{buffLabel}.effect '{buff.Effect}' may only appear once on an item.");
             }
 
             if (buff.Value is double value && !double.IsFinite(value))

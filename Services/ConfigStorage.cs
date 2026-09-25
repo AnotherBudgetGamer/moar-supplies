@@ -17,6 +17,7 @@ public sealed class ConfigStorage
     private const string SettingsFileName = "settings.json";
     private const string StimDirectoryName = "stims";
     private const string DrinkDirectoryName = "drinks";
+    private const string FoodDirectoryName = "foods";
     private const string MedicalPackDirectoryName = "medical-packs";
     private const string LegacyFileName = "stims.json";
 
@@ -48,12 +49,16 @@ public sealed class ConfigStorage
         string[] drinkDefinitionPaths = Directory.Exists(drinkDirectory)
             ? Directory.GetFiles(drinkDirectory, "*.json", SearchOption.TopDirectoryOnly)
             : [];
+        string foodDirectory = Path.Combine(configDirectory, FoodDirectoryName);
+        string[] foodDefinitionPaths = Directory.Exists(foodDirectory)
+            ? Directory.GetFiles(foodDirectory, "*.json", SearchOption.TopDirectoryOnly)
+            : [];
         string medicalPackDirectory = Path.Combine(configDirectory, MedicalPackDirectoryName);
         string[] medicalPackDefinitionPaths = Directory.Exists(medicalPackDirectory)
             ? Directory.GetFiles(medicalPackDirectory, "*.json", SearchOption.TopDirectoryOnly)
             : [];
 
-        if (definitionPaths.Length == 0 && drinkDefinitionPaths.Length == 0 && medicalPackDefinitionPaths.Length == 0)
+        if (definitionPaths.Length == 0 && drinkDefinitionPaths.Length == 0 && foodDefinitionPaths.Length == 0 && medicalPackDefinitionPaths.Length == 0)
         {
             string legacyPath = Path.Combine(configDirectory, LegacyFileName);
             if (!File.Exists(legacyPath))
@@ -95,6 +100,14 @@ public sealed class ConfigStorage
             }
         }
 
+        List<FoodDefinition> foods = [];
+        foreach (string definitionPath in foodDefinitionPaths.OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
+        {
+            FoodDefinition? food = await DeserializeAsync<FoodDefinition>(definitionPath, cancellationToken);
+            if (food is null) throw new InvalidDataException($"Food definition '{definitionPath}' could not be deserialized.");
+            foods.Add(food);
+        }
+
         List<MedicalPackDefinition> medicalPacks = [];
         foreach (string definitionPath in medicalPackDefinitionPaths.OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
         {
@@ -103,7 +116,7 @@ public sealed class ConfigStorage
             medicalPacks.Add(medicalPack);
         }
 
-        return new ConfigLoadResult(new ModConfig { Version = settings.Version, Debug = settings.Debug, Stims = stims, Drinks = drinks, MedicalPacks = medicalPacks }, UsesLegacyFormat: false, configDirectory);
+        return new ConfigLoadResult(new ModConfig { Version = settings.Version, Debug = settings.Debug, Stims = stims, Drinks = drinks, Foods = foods, MedicalPacks = medicalPacks }, UsesLegacyFormat: false, configDirectory);
     }
 
     public async Task<ConfigSaveResult> SaveAsync(StimDefinition definition, string? originalId, CancellationToken cancellationToken)
@@ -119,7 +132,7 @@ public sealed class ConfigStorage
             .ToList();
         updatedStims.Add(definition);
 
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = updatedStims, Drinks = current.Drinks, MedicalPacks = current.MedicalPacks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = updatedStims, Drinks = current.Drinks, Foods = current.Foods, MedicalPacks = current.MedicalPacks };
         IReadOnlyList<string> validationErrors = _configValidator.Validate(updatedConfig);
         if (validationErrors.Count > 0)
         {
@@ -147,7 +160,7 @@ public sealed class ConfigStorage
 
         List<DrinkDefinition> updatedDrinks = current.Drinks.Where(drink => !string.Equals(drink.Id, originalId, StringComparison.OrdinalIgnoreCase)).ToList();
         updatedDrinks.Add(definition);
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = updatedDrinks, MedicalPacks = current.MedicalPacks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = updatedDrinks, Foods = current.Foods, MedicalPacks = current.MedicalPacks };
         IReadOnlyList<string> validationErrors = _configValidator.Validate(updatedConfig);
         if (validationErrors.Count > 0) return ConfigSaveResult.Failure(validationErrors);
 
@@ -182,7 +195,7 @@ public sealed class ConfigStorage
         List<StimDefinition> remainingStims = current.Stims
             .Where(stim => !string.Equals(stim.Id, definition.Id, StringComparison.OrdinalIgnoreCase))
             .ToList();
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = remainingStims, Drinks = current.Drinks, MedicalPacks = current.MedicalPacks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = remainingStims, Drinks = current.Drinks, Foods = current.Foods, MedicalPacks = current.MedicalPacks };
 
         try
         {
@@ -216,6 +229,57 @@ public sealed class ConfigStorage
         return ConfigSaveResult.Success();
     }
 
+    public async Task<ConfigSaveResult> SaveFoodAsync(FoodDefinition definition, string? originalId, CancellationToken cancellationToken)
+    {
+        ModConfig? current = _configState.Current;
+        if (current is null) return ConfigSaveResult.Failure("A valid configuration must be loaded before a definition can be saved.");
+        List<FoodDefinition> updatedFoods = current.Foods.Where(food => !string.Equals(food.Id, originalId, StringComparison.OrdinalIgnoreCase)).ToList();
+        updatedFoods.Add(definition);
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = current.Drinks, Foods = updatedFoods, MedicalPacks = current.MedicalPacks };
+        IReadOnlyList<string> validationErrors = _configValidator.Validate(updatedConfig);
+        if (validationErrors.Count > 0) return ConfigSaveResult.Failure(validationErrors);
+        try
+        {
+            await WriteSplitConfigurationAsync(updatedConfig, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(originalId) && !string.Equals(originalId, definition.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                string oldPath = Path.Combine(GetConfigDirectory(), FoodDirectoryName, $"{originalId}.json");
+                if (File.Exists(oldPath)) File.Delete(oldPath);
+            }
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+        {
+            _logger.LogError(exception, "[MoarSupplies] Could not save food '{FoodId}'.", definition.Id);
+            return ConfigSaveResult.Failure("The definition could not be written. Check the server log and that the config folder is writable.");
+        }
+        _configState.Current = updatedConfig;
+        return ConfigSaveResult.Success();
+    }
+
+    public async Task<ConfigSaveResult> DeleteFoodAsync(string foodId, CancellationToken cancellationToken)
+    {
+        ModConfig? current = _configState.Current;
+        FoodDefinition? definition = current?.Foods.FirstOrDefault(food => string.Equals(food.Id, foodId, StringComparison.OrdinalIgnoreCase));
+        if (current is null || definition is null) return ConfigSaveResult.Failure("The selected definition could not be found.");
+        List<FoodDefinition> remainingFoods = current.Foods.Where(food => !string.Equals(food.Id, definition.Id, StringComparison.OrdinalIgnoreCase)).ToList();
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = current.Drinks, Foods = remainingFoods, MedicalPacks = current.MedicalPacks };
+        try
+        {
+            string foodDirectory = Path.Combine(GetConfigDirectory(), FoodDirectoryName);
+            Directory.CreateDirectory(foodDirectory);
+            await WriteSplitConfigurationAsync(updatedConfig, cancellationToken);
+            string definitionPath = Path.Combine(foodDirectory, $"{definition.Id}.json");
+            if (File.Exists(definitionPath)) File.Delete(definitionPath);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+        {
+            _logger.LogError(exception, "[MoarSupplies] Could not delete food '{FoodId}'.", definition.Id);
+            return ConfigSaveResult.Failure("The definition could not be deleted. Check the server log and that the config folder is writable.");
+        }
+        _configState.Current = updatedConfig;
+        return ConfigSaveResult.Success();
+    }
+
     public async Task<ConfigSaveResult> SaveMedicalPackAsync(MedicalPackDefinition definition, string? originalId, CancellationToken cancellationToken)
     {
         ModConfig? current = _configState.Current;
@@ -223,7 +287,7 @@ public sealed class ConfigStorage
 
         List<MedicalPackDefinition> updatedMedicalPacks = current.MedicalPacks.Where(medicalPack => !string.Equals(medicalPack.Id, originalId, StringComparison.OrdinalIgnoreCase)).ToList();
         updatedMedicalPacks.Add(definition);
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = current.Drinks, MedicalPacks = updatedMedicalPacks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = current.Drinks, Foods = current.Foods, MedicalPacks = updatedMedicalPacks };
         IReadOnlyList<string> validationErrors = _configValidator.Validate(updatedConfig);
         if (validationErrors.Count > 0) return ConfigSaveResult.Failure(validationErrors);
 
@@ -258,7 +322,7 @@ public sealed class ConfigStorage
         List<DrinkDefinition> remainingDrinks = current.Drinks
             .Where(drink => !string.Equals(drink.Id, definition.Id, StringComparison.OrdinalIgnoreCase))
             .ToList();
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = remainingDrinks, MedicalPacks = current.MedicalPacks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = remainingDrinks, Foods = current.Foods, MedicalPacks = current.MedicalPacks };
 
         try
         {
@@ -299,7 +363,7 @@ public sealed class ConfigStorage
         if (current is null || definition is null) return ConfigSaveResult.Failure("The selected definition could not be found.");
 
         List<MedicalPackDefinition> remainingMedicalPacks = current.MedicalPacks.Where(medicalPack => !string.Equals(medicalPack.Id, definition.Id, StringComparison.OrdinalIgnoreCase)).ToList();
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = current.Drinks, MedicalPacks = remainingMedicalPacks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = current.Drinks, Foods = current.Foods, MedicalPacks = remainingMedicalPacks };
 
         try
         {
@@ -352,6 +416,12 @@ public sealed class ConfigStorage
         foreach (DrinkDefinition drink in config.Drinks)
         {
             await WriteJsonAtomicallyAsync(Path.Combine(drinkDirectory, $"{drink.Id}.json"), drink, cancellationToken);
+        }
+        string foodDirectory = Path.Combine(configDirectory, FoodDirectoryName);
+        Directory.CreateDirectory(foodDirectory);
+        foreach (FoodDefinition food in config.Foods)
+        {
+            await WriteJsonAtomicallyAsync(Path.Combine(foodDirectory, $"{food.Id}.json"), food, cancellationToken);
         }
         string medicalPackDirectory = Path.Combine(configDirectory, MedicalPackDirectoryName);
         Directory.CreateDirectory(medicalPackDirectory);

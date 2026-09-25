@@ -13,6 +13,7 @@ public sealed class StimIdService
 {
     private const string ItemIdNamespace = "com.anotherbudgetgamer.moarsupplies:item:";
     private const string DrinkItemIdNamespace = "com.anotherbudgetgamer.moarsupplies:drink:item:";
+    private const string FoodItemIdNamespace = "com.anotherbudgetgamer.moarsupplies:food:item:";
     private const string MedicalPackItemIdNamespace = "com.anotherbudgetgamer.moarsupplies:medical-pack:item:";
     private const string TraderAssortIdNamespace = "com.anotherbudgetgamer.moarsupplies:assort:";
     private const string BuffKeyPrefix = "MoarSupplies_";
@@ -33,6 +34,13 @@ public sealed class StimIdService
         string buffKey = BuffKeyPrefix + "Drink_" + drinkId;
 
         return new StimRegistrationIds(itemTemplateId, buffKey, traderAssortId);
+    }
+
+    public StimRegistrationIds CreateFood(string foodId)
+    {
+        string itemTemplateId = CreateMongoId(FoodItemIdNamespace + foodId);
+        string traderAssortId = CreateMongoId(TraderAssortIdNamespace + "food:" + foodId);
+        return new StimRegistrationIds(itemTemplateId, string.Empty, traderAssortId);
     }
 
     public StimRegistrationIds CreateMedicalPack(string medicalPackId)

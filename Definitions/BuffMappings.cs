@@ -42,7 +42,10 @@ public static class BuffMappings
         ["metabolism"] = new("SkillRate", "Metabolism"),
         ["maxStamina"] = new("MaxStamina"),
         ["nightOps"] = new("SkillRate", "NightOps"),
-        ["painSuppression"] = new("Pain", RequiresValue: false, AbsoluteValue: false, Polarity: EffectPolarity.AlwaysBeneficial),
+        // Pain is the harmful stimulant buff. Pain suppression is instead a
+        // direct medical-item effect (the same path used by vanilla morphine).
+        ["pain"] = new("Pain", RequiresValue: false, AbsoluteValue: false, Polarity: EffectPolarity.AlwaysHarmful),
+        ["painSuppression"] = new(ItemEffectType: ItemEffectType.PainSuppression, RequiresValue: false, AbsoluteValue: false, Polarity: EffectPolarity.AlwaysBeneficial),
         ["perception"] = new("SkillRate", "Perception"),
         ["pistol"] = new("SkillRate", "Pistol"),
         ["proneMovement"] = new("SkillRate", "ProneMovement"),
@@ -83,6 +86,9 @@ public static class BuffMappings
 
     public static bool TryGet(string effect, out BuffMapping mapping) => SupportedBuffs.TryGetValue(effect, out mapping!);
 
+    public static bool IsStimulatorBuff(string effect) =>
+        TryGet(effect, out BuffMapping mapping) && mapping.ItemEffectType == ItemEffectType.None;
+
     /// <summary>
     /// Identifies whether an effect is presented as a drawback in the mod web UI.
     /// </summary>
@@ -107,11 +113,19 @@ public static class BuffMappings
 /// Describes how a friendly effect is represented by SPT.
 /// </summary>
 public sealed record BuffMapping(
-    string BuffType,
+    string BuffType = "",
     string? SkillName = null,
     bool RequiresValue = true,
     bool AbsoluteValue = true,
-    EffectPolarity Polarity = EffectPolarity.ByValue);
+    EffectPolarity Polarity = EffectPolarity.ByValue,
+    ItemEffectType ItemEffectType = ItemEffectType.None);
+
+/// <summary>Effects applied by medical-item data instead of stimulant buffs.</summary>
+public enum ItemEffectType
+{
+    None,
+    PainSuppression
+}
 
 /// <summary>
 /// Defines how an effect is visually classified when displayed to users.
