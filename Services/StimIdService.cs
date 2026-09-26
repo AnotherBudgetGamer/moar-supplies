@@ -15,6 +15,7 @@ public sealed class StimIdService
     private const string DrinkItemIdNamespace = "com.anotherbudgetgamer.moarsupplies:drink:item:";
     private const string FoodItemIdNamespace = "com.anotherbudgetgamer.moarsupplies:food:item:";
     private const string MedicalPackItemIdNamespace = "com.anotherbudgetgamer.moarsupplies:medical-pack:item:";
+    private const string MappingTestItemIdNamespace = "com.anotherbudgetgamer.moarsupplies:mapping-test:item:";
     private const string TraderAssortIdNamespace = "com.anotherbudgetgamer.moarsupplies:assort:";
     private const string BuffKeyPrefix = "MoarSupplies_";
 
@@ -49,6 +50,9 @@ public sealed class StimIdService
         string traderAssortId = CreateMongoId(TraderAssortIdNamespace + "medical-pack:" + medicalPackId);
         return new StimRegistrationIds(itemTemplateId, string.Empty, traderAssortId);
     }
+
+    public string CreateMappedItemTestClone(string sourceTemplateId) =>
+        CreateMongoId(MappingTestItemIdNamespace + sourceTemplateId);
 
     private static string CreateMongoId(string source)
     {

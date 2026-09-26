@@ -22,6 +22,7 @@ public sealed class ConfigLoader : IOnLoad
     private readonly DrinkService _drinkService;
     private readonly FoodService _foodService;
     private readonly MedicalPackService _medicalPackService;
+    private readonly MappedItemTestCloneService _mappedItemTestCloneService;
 
     public ConfigLoader(
         ILogger<ConfigLoader> logger,
@@ -32,7 +33,8 @@ public sealed class ConfigLoader : IOnLoad
         StimService stimService,
         DrinkService drinkService,
         FoodService foodService,
-        MedicalPackService medicalPackService)
+        MedicalPackService medicalPackService,
+        MappedItemTestCloneService mappedItemTestCloneService)
     {
         _logger = logger;
         _configValidator = configValidator;
@@ -43,6 +45,7 @@ public sealed class ConfigLoader : IOnLoad
         _drinkService = drinkService;
         _foodService = foodService;
         _medicalPackService = medicalPackService;
+        _mappedItemTestCloneService = mappedItemTestCloneService;
     }
 
     public async Task OnLoadAsync(CancellationToken cancellationToken)
@@ -228,6 +231,7 @@ public sealed class ConfigLoader : IOnLoad
         _logger.LogInformation("[MoarSupplies] {DrinkCount} drink(s) created.", createdDrinkCount);
         _logger.LogInformation("[MoarSupplies] {FoodCount} food item(s) created.", createdFoodCount);
         _logger.LogInformation("[MoarSupplies] {MedicalPackCount} medical pack(s) created.", createdMedicalPackCount);
+        _mappedItemTestCloneService.CreateMissingMappedItemClones(config);
     }
 
     private static string DescribeTags(IEnumerable<string> tags) => tags.Any() ? string.Join(", ", tags) : "none";

@@ -17,7 +17,7 @@ It includes a built-in web workshop for everyday editing and a clear JSON format
 - Uses readable names such as `propital`, `healthRate`, and `therapist` instead of raw SPT IDs.
 - Lets you add beneficial effects, tradeoffs, durations, and delayed effects.
 - Gives each definition stable internal IDs, so items already in a profile remain valid after a normal server restart.
-- Adds enabled items to world loot and, when selected, to supported traders with a configurable rouble price and loyalty level.
+- Adds enabled items to world loot and, when selected, to supported traders with a configurable rouble price and loyalty level. `Fence *` adds an item to Fence's randomized pool rather than guaranteeing a listing.
 - Provides a server-side web workshop to browse, create, edit, enable/disable, and delete definitions.
 - Stores definitions as one readable JSON file per item and validates the complete configuration before registering anything.
 
@@ -47,7 +47,7 @@ The web interface is the recommended way to manage items and supplies. It is des
 3. Choose a base item and number of uses.
 4. Enter the player-facing name, short name, and description.
 5. Add effects and set each effect's value, duration, and optional delay.
-6. Optionally make the item purchasable through a supported trader. All enabled items remain available in world loot; this setting only controls trader sales.
+6. Optionally make the item purchasable through a supported trader. All enabled items remain available in world loot; this setting only controls trader sales. `Fence *` is a randomized-pool selection, not a guaranteed offer.
 7. Save the definition, then **restart the SPT server** before starting the game to apply it in-game.
 
 Saved definitions are written to `config/stims/`, one file per item. The workshop tells you about validation errors before it writes a change.
@@ -87,14 +87,17 @@ config/
     field-afak.json
 ```
 
-`settings.json` contains the configuration format version and optional debug logging:
+`settings.json` contains the configuration format version, optional debug logging, and an opt-in mapping smoke test:
 
 ```json
 {
   "version": 1,
-  "debug": false
+  "debug": false,
+  "enableMappedItemTestClones": false
 }
 ```
+
+Set `enableMappedItemTestClones` to `true` to create one diagnostic clone for every mapped vanilla base item not already used by a configured starter definition. Each is named `Moar <vanilla name>`, uses `M-<vanilla short name>`, preserves the vanilla description, and scales numeric item values and handbook price by 20%. The server log records the created, skipped, and failed totals, plus the exact mapping for any failure. These are added to the handbook and flea-price database for inspection; set the option back to `false` once the mapping test is complete.
 
 Each file in `config/stims/` contains one item definition. This is the full shape of an item:
 
@@ -144,7 +147,7 @@ Each file in `config/stims/` contains one item definition. This is the full shap
 | `uses` | Number of uses provided by the new item. Must be greater than zero. |
 | `tags` | Optional workshop labels; up to eight, each 32 characters or fewer. They do not change gameplay. |
 | `buffs` | An array of effects. Each effect has a duration in seconds (maximum 1,800 seconds / 30 minutes) and may have a delayed start. |
-| `trader` | Optional trader availability. Set `enabled` to `false` to keep the item out of trader inventories; enabled items remain available in world loot. |
+| `trader` | Optional trader availability. Set `enabled` to `false` to keep the item out of trader inventories; enabled items remain available in world loot. `Fence` is an exception: it adds the item to Fence's randomized pool and does not guarantee an inventory listing. |
 | `trader.traderId` | Optional stable SPT trader ID. The workshop writes this automatically for every selection; it lets Moar Supplies target a modded trader reliably while retaining its friendly name. |
 
 Definitions are loaded as a complete set. If any definition is invalid, Moar Supplies reports the errors and registers no items, preventing a partly updated setup.
@@ -165,7 +168,7 @@ Supported food bases: `alyonka`, `army-crackers`, `condensed-milk`, `emelya-rye-
 
 ### Medical packs
 
-Medical-pack definitions live in `config/medical-packs/`. They clone the base item's treatment behavior (including what it can treat) and expose only the two values that are safe to tune independently:
+Medical-pack definitions live in `config/medical-packs/`. They clone the base item's treatment behavior (including what it can treat). Alongside resource and healing rate, supported treatment costs can be tuned independently:
 
 ```json
 {
@@ -179,6 +182,9 @@ Medical-pack definitions live in `config/medical-packs/`. They clone the base it
   "baseItem": "afak",
   "resource": 480,
   "resourceRate": 60,
+  "lightBleedingCost": 30,
+  "heavyBleedingCost": 170,
+  "radiationTreatmentCost": 0,
   "tags": ["medical"],
   "trader": {
     "enabled": true,
@@ -189,13 +195,13 @@ Medical-pack definitions live in `config/medical-packs/`. They clone the base it
 }
 ```
 
-`resource` follows the cloned item's native resource behavior: it is a total HP pool for med kits, a surgery-use count for surgical kits, and can be zero for a one-use treatment item. `resourceRate` is the health restored per treatment where the base supports it. For surgical kits, `surgeryRestoreMultiplier` adjusts the restored limb health and `useTimeMultiplier` adjusts the base animation time; for example, `1.2` restores 20% more health and `0.5` takes half as long.
+`resource` follows the cloned item's native resource behavior: it is a total HP pool for med kits, a surgery-use count for surgical kits, and can be zero for a one-use treatment item. `resourceRate` is the health restored per treatment where the base supports it. `lightBleedingCost`, `heavyBleedingCost`, and `radiationTreatmentCost` are optional resource costs for their respective treatments; omit them to retain the base item's value. The editor shows only treatments the chosen base item can perform. For surgical kits, `surgeryRestoreMultiplier` adjusts the restored limb health and `useTimeMultiplier` adjusts the base animation time; for example, `1.2` restores 20% more health and `0.5` takes half as long.
 
 Supported medical bases: `afak`, `ai2`, `car`, `ifak`, `salewa`, `grizzly`, `sanitar-afak`; `cms`, `surv12`, `sanitar-surgery-kit`; `bandage`, `army-bandage`, `cat`, `esmarch`, `calok-b`; `splint`, `alu-splint`; `golden-star`, `vaseline`; and `analgin`, `augmentin`, `ibuprofen`.
 
 ### Supported traders
 
-All vanilla traders are supported: `therapist`, `prapor`, `skier`, `peacekeeper`, `mechanic`, `ragman`, `jaeger`, and `fence`. The workshop also discovers every enabled trader mod that has registered with SPT, displaying its friendly trader name while saving its stable internal ID. Trader availability controls purchasing only: items not available from a trader remain in world loot. Trader loyalty levels must be from 1 through 4, and a sale price must be greater than zero.
+All vanilla traders are supported: `therapist`, `prapor`, `skier`, `peacekeeper`, `mechanic`, `ragman`, `jaeger`, and `fence`. The workshop labels Fence as `Fence *`: selecting it adds the item to Fence's randomized pool after a Fence refresh, so it can appear but is not guaranteed to be listed. All other listed traders receive a direct, persistent offer at the configured price and loyalty level. The workshop also discovers every enabled trader mod that has registered with SPT, displaying its friendly trader name while saving its stable internal ID. Trader availability controls purchasing only: items not available from a trader remain in world loot. Trader loyalty levels must be from 1 through 4, and a sale price must be greater than zero.
 
 ### Supported effects
 
@@ -230,13 +236,16 @@ Read the server log. Moar Supplies validates every definition before making any 
 **An item vanished after I changed it**
 Check whether its `enabled` field is still `true`. Also avoid changing a definition's `id` once items using it are in a profile: the ID is the stable identity used to derive the in-game item template.
 
+**SPT reports an invalid profile after I removed or changed an item**
+This usually means a removed Moar Supplies item is still referenced in the player's inventory or stash. Read and follow the server error message: it tells you which profile-cleanup setting to enable. Set either `removeModItemFromProfile` or `removeTraderFromProfile`, as instructed, then restart the server so SPT can remove the leftover item reference. Back up the profile before doing this.
+
 ## Post-1.0 experimental roadmap
 
 Version 1.0 focuses on a stable, user-editable catalog of vanilla-base supplies: medical kits, surgery kits, bleeding treatments, splints, balms, consumables, drinks, and stimulants. The supported editing controls preserve the selected vanilla item's native use behavior.
 
 After 1.0, the first experimental track is **cross-item timed effects**. This would test attaching Moar Supplies buffs and debuffs to item classes that do not normally use them—for example, a bandage that applies a short health-regeneration effect after treating bleeding. It is intentionally deferred because each medical item type must be validated in raid for client behavior, resource consumption, animations, effects timing, and profile safety before it can be considered stable.
 
-The 1.0+ workshop roadmap also includes a **stim-definition backup/export** option, so users can easily copy their custom stim definitions somewhere safe before making changes. A companion **delete all shipped stims** control will let users remove the full set of default Moar Supplies stimulants at once when they prefer not to use them.
+The 1.0+ workshop roadmap also includes **guaranteed Fence listings**, so a definition assigned to Fence can remain in his active inventory at its configured price instead of only joining his randomized pool. It also includes a **stim-definition backup/export** option, so users can easily copy their custom stim definitions somewhere safe before making changes. A companion **delete all shipped stims** control will let users remove the full set of default Moar Supplies stimulants at once when they prefer not to use them.
 
 Experimental effects will remain opt-in and clearly labeled until they have been tested across the supported item families.
 

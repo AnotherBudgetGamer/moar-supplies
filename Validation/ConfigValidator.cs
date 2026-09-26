@@ -124,6 +124,9 @@ public sealed partial class ConfigValidator
         else if (!ItemMappings.IsSupportedMedicalPack(medicalPack.BaseItem)) errors.Add($"{label}: field 'baseItem' value '{medicalPack.BaseItem}' is not supported.");
         if (medicalPack.Resource < 0) errors.Add($"{label}: field 'resource' must be zero or greater.");
         if (medicalPack.ResourceRate < 0) errors.Add($"{label}: field 'resourceRate' must be zero or greater.");
+        if (medicalPack.LightBleedingCost < 0) errors.Add($"{label}: field 'lightBleedingCost' must be zero or greater when provided.");
+        if (medicalPack.HeavyBleedingCost < 0) errors.Add($"{label}: field 'heavyBleedingCost' must be zero or greater when provided.");
+        if (medicalPack.RadiationTreatmentCost < 0) errors.Add($"{label}: field 'radiationTreatmentCost' must be zero or greater when provided.");
         if (medicalPack.UseTimeMultiplier is double useTimeMultiplier && (!double.IsFinite(useTimeMultiplier) || useTimeMultiplier <= 0)) errors.Add($"{label}: field 'useTimeMultiplier' must be a finite number greater than zero when provided.");
         if (medicalPack.SurgeryRestoreMultiplier is double surgeryRestoreMultiplier && (!double.IsFinite(surgeryRestoreMultiplier) || surgeryRestoreMultiplier <= 0)) errors.Add($"{label}: field 'surgeryRestoreMultiplier' must be a finite number greater than zero when provided.");
         ValidateTags(medicalPack.Tags, label, errors);

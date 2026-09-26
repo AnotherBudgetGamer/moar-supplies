@@ -161,8 +161,12 @@
     private ModConfig? Config => ConfigState.Current;
 
     private static string TraderLabel(TraderDefinition? trader) => trader is { Enabled: true }
-        ? $"{trader.Trader} · LL{trader.LoyaltyLevel} · {trader.Price:N0} ₽"
+        ? $"{TraderDisplayName(trader)} · LL{trader.LoyaltyLevel} · {trader.Price:N0} ₽"
         : "World loot only";
+
+    private static string TraderDisplayName(TraderDefinition trader) => string.Equals(trader.TraderId, "579dc571d53a0658a154fbec", StringComparison.OrdinalIgnoreCase)
+        ? "Fence *"
+        : trader.Trader;
 
     private static string DisplayEffectName(string effect) => string.IsNullOrWhiteSpace(effect)
         ? "Unknown effect"

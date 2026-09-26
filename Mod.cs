@@ -11,7 +11,7 @@ namespace MoarSupplies;
 public sealed class Mod : IModMetadata, IModBlazorMetadata
 {
     public string ModGuid { get; init; } = "com.anotherbudgetgamer.moarsupplies";
-    public string Name { get; init; } = "MoarSupplies";
+    public string Name { get; init; } = "Moar Supplies";
     public string Author { get; init; } = "AnotherBudgetGamer";
     public List<string>? Contributors { get; init; } = null;
     public SemanticVersion Version { get; init; } = new("0.6.0");
@@ -23,5 +23,5 @@ public sealed class Mod : IModMetadata, IModBlazorMetadata
     public string License { get; init; } = "All Rights Reserved";
     public string? WWWRootUrl { get; init; } = "MoarSupplies";
     public string? HomePage { get; init; } = "/moar-supplies";
-    public string? HomePageDescription { get; init; } = "View your custom stimulant definitions and their registration status.";
+    public string? HomePageDescription { get; init; } = "Create and manage custom stims, drinks, food, and medical supplies.";
 }

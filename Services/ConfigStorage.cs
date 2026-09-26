@@ -116,7 +116,7 @@ public sealed class ConfigStorage
             medicalPacks.Add(medicalPack);
         }
 
-        return new ConfigLoadResult(new ModConfig { Version = settings.Version, Debug = settings.Debug, Stims = stims, Drinks = drinks, Foods = foods, MedicalPacks = medicalPacks }, UsesLegacyFormat: false, configDirectory);
+        return new ConfigLoadResult(new ModConfig { Version = settings.Version, Debug = settings.Debug, EnableMappedItemTestClones = settings.EnableMappedItemTestClones, Stims = stims, Drinks = drinks, Foods = foods, MedicalPacks = medicalPacks }, UsesLegacyFormat: false, configDirectory);
     }
 
     public async Task<ConfigSaveResult> SaveAsync(StimDefinition definition, string? originalId, CancellationToken cancellationToken)
@@ -132,7 +132,7 @@ public sealed class ConfigStorage
             .ToList();
         updatedStims.Add(definition);
 
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = updatedStims, Drinks = current.Drinks, Foods = current.Foods, MedicalPacks = current.MedicalPacks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, EnableMappedItemTestClones = current.EnableMappedItemTestClones, Stims = updatedStims, Drinks = current.Drinks, Foods = current.Foods, MedicalPacks = current.MedicalPacks };
         IReadOnlyList<string> validationErrors = _configValidator.Validate(updatedConfig);
         if (validationErrors.Count > 0)
         {
@@ -160,7 +160,7 @@ public sealed class ConfigStorage
 
         List<DrinkDefinition> updatedDrinks = current.Drinks.Where(drink => !string.Equals(drink.Id, originalId, StringComparison.OrdinalIgnoreCase)).ToList();
         updatedDrinks.Add(definition);
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = updatedDrinks, Foods = current.Foods, MedicalPacks = current.MedicalPacks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, EnableMappedItemTestClones = current.EnableMappedItemTestClones, Stims = current.Stims, Drinks = updatedDrinks, Foods = current.Foods, MedicalPacks = current.MedicalPacks };
         IReadOnlyList<string> validationErrors = _configValidator.Validate(updatedConfig);
         if (validationErrors.Count > 0) return ConfigSaveResult.Failure(validationErrors);
 
@@ -195,7 +195,7 @@ public sealed class ConfigStorage
         List<StimDefinition> remainingStims = current.Stims
             .Where(stim => !string.Equals(stim.Id, definition.Id, StringComparison.OrdinalIgnoreCase))
             .ToList();
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = remainingStims, Drinks = current.Drinks, Foods = current.Foods, MedicalPacks = current.MedicalPacks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, EnableMappedItemTestClones = current.EnableMappedItemTestClones, Stims = remainingStims, Drinks = current.Drinks, Foods = current.Foods, MedicalPacks = current.MedicalPacks };
 
         try
         {
@@ -203,7 +203,7 @@ public sealed class ConfigStorage
             string stimDirectory = Path.Combine(configDirectory, StimDirectoryName);
             Directory.CreateDirectory(stimDirectory);
 
-            await WriteJsonAtomicallyAsync(Path.Combine(configDirectory, SettingsFileName), new ModSettings { Version = updatedConfig.Version, Debug = updatedConfig.Debug }, cancellationToken);
+            await WriteJsonAtomicallyAsync(Path.Combine(configDirectory, SettingsFileName), new ModSettings { Version = updatedConfig.Version, Debug = updatedConfig.Debug, EnableMappedItemTestClones = updatedConfig.EnableMappedItemTestClones }, cancellationToken);
             await WriteSplitConfigurationAsync(updatedConfig, cancellationToken);
 
             string definitionPath = Path.Combine(stimDirectory, $"{definition.Id}.json");
@@ -235,7 +235,7 @@ public sealed class ConfigStorage
         if (current is null) return ConfigSaveResult.Failure("A valid configuration must be loaded before a definition can be saved.");
         List<FoodDefinition> updatedFoods = current.Foods.Where(food => !string.Equals(food.Id, originalId, StringComparison.OrdinalIgnoreCase)).ToList();
         updatedFoods.Add(definition);
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = current.Drinks, Foods = updatedFoods, MedicalPacks = current.MedicalPacks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, EnableMappedItemTestClones = current.EnableMappedItemTestClones, Stims = current.Stims, Drinks = current.Drinks, Foods = updatedFoods, MedicalPacks = current.MedicalPacks };
         IReadOnlyList<string> validationErrors = _configValidator.Validate(updatedConfig);
         if (validationErrors.Count > 0) return ConfigSaveResult.Failure(validationErrors);
         try
@@ -262,7 +262,7 @@ public sealed class ConfigStorage
         FoodDefinition? definition = current?.Foods.FirstOrDefault(food => string.Equals(food.Id, foodId, StringComparison.OrdinalIgnoreCase));
         if (current is null || definition is null) return ConfigSaveResult.Failure("The selected definition could not be found.");
         List<FoodDefinition> remainingFoods = current.Foods.Where(food => !string.Equals(food.Id, definition.Id, StringComparison.OrdinalIgnoreCase)).ToList();
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = current.Drinks, Foods = remainingFoods, MedicalPacks = current.MedicalPacks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, EnableMappedItemTestClones = current.EnableMappedItemTestClones, Stims = current.Stims, Drinks = current.Drinks, Foods = remainingFoods, MedicalPacks = current.MedicalPacks };
         try
         {
             string foodDirectory = Path.Combine(GetConfigDirectory(), FoodDirectoryName);
@@ -287,7 +287,7 @@ public sealed class ConfigStorage
 
         List<MedicalPackDefinition> updatedMedicalPacks = current.MedicalPacks.Where(medicalPack => !string.Equals(medicalPack.Id, originalId, StringComparison.OrdinalIgnoreCase)).ToList();
         updatedMedicalPacks.Add(definition);
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = current.Drinks, Foods = current.Foods, MedicalPacks = updatedMedicalPacks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, EnableMappedItemTestClones = current.EnableMappedItemTestClones, Stims = current.Stims, Drinks = current.Drinks, Foods = current.Foods, MedicalPacks = updatedMedicalPacks };
         IReadOnlyList<string> validationErrors = _configValidator.Validate(updatedConfig);
         if (validationErrors.Count > 0) return ConfigSaveResult.Failure(validationErrors);
 
@@ -322,7 +322,7 @@ public sealed class ConfigStorage
         List<DrinkDefinition> remainingDrinks = current.Drinks
             .Where(drink => !string.Equals(drink.Id, definition.Id, StringComparison.OrdinalIgnoreCase))
             .ToList();
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = remainingDrinks, Foods = current.Foods, MedicalPacks = current.MedicalPacks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, EnableMappedItemTestClones = current.EnableMappedItemTestClones, Stims = current.Stims, Drinks = remainingDrinks, Foods = current.Foods, MedicalPacks = current.MedicalPacks };
 
         try
         {
@@ -330,7 +330,7 @@ public sealed class ConfigStorage
             string drinkDirectory = Path.Combine(configDirectory, DrinkDirectoryName);
             Directory.CreateDirectory(drinkDirectory);
 
-            await WriteJsonAtomicallyAsync(Path.Combine(configDirectory, SettingsFileName), new ModSettings { Version = updatedConfig.Version, Debug = updatedConfig.Debug }, cancellationToken);
+            await WriteJsonAtomicallyAsync(Path.Combine(configDirectory, SettingsFileName), new ModSettings { Version = updatedConfig.Version, Debug = updatedConfig.Debug, EnableMappedItemTestClones = updatedConfig.EnableMappedItemTestClones }, cancellationToken);
             await WriteSplitConfigurationAsync(updatedConfig, cancellationToken);
 
             string definitionPath = Path.Combine(drinkDirectory, $"{definition.Id}.json");
@@ -363,7 +363,7 @@ public sealed class ConfigStorage
         if (current is null || definition is null) return ConfigSaveResult.Failure("The selected definition could not be found.");
 
         List<MedicalPackDefinition> remainingMedicalPacks = current.MedicalPacks.Where(medicalPack => !string.Equals(medicalPack.Id, definition.Id, StringComparison.OrdinalIgnoreCase)).ToList();
-        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, Stims = current.Stims, Drinks = current.Drinks, Foods = current.Foods, MedicalPacks = remainingMedicalPacks };
+        ModConfig updatedConfig = new() { Version = current.Version, Debug = current.Debug, EnableMappedItemTestClones = current.EnableMappedItemTestClones, Stims = current.Stims, Drinks = current.Drinks, Foods = current.Foods, MedicalPacks = remainingMedicalPacks };
 
         try
         {
@@ -371,7 +371,7 @@ public sealed class ConfigStorage
             string medicalPackDirectory = Path.Combine(configDirectory, MedicalPackDirectoryName);
             Directory.CreateDirectory(medicalPackDirectory);
 
-            await WriteJsonAtomicallyAsync(Path.Combine(configDirectory, SettingsFileName), new ModSettings { Version = updatedConfig.Version, Debug = updatedConfig.Debug }, cancellationToken);
+            await WriteJsonAtomicallyAsync(Path.Combine(configDirectory, SettingsFileName), new ModSettings { Version = updatedConfig.Version, Debug = updatedConfig.Debug, EnableMappedItemTestClones = updatedConfig.EnableMappedItemTestClones }, cancellationToken);
             await WriteSplitConfigurationAsync(updatedConfig, cancellationToken);
 
             string definitionPath = Path.Combine(medicalPackDirectory, $"{definition.Id}.json");
@@ -404,7 +404,7 @@ public sealed class ConfigStorage
         string stimDirectory = Path.Combine(configDirectory, StimDirectoryName);
         Directory.CreateDirectory(stimDirectory);
 
-        await WriteJsonAtomicallyAsync(Path.Combine(configDirectory, SettingsFileName), new ModSettings { Version = config.Version, Debug = config.Debug }, cancellationToken);
+        await WriteJsonAtomicallyAsync(Path.Combine(configDirectory, SettingsFileName), new ModSettings { Version = config.Version, Debug = config.Debug, EnableMappedItemTestClones = config.EnableMappedItemTestClones }, cancellationToken);
 
         // On the first save from a legacy install, this writes every loaded definition so none are lost.
         foreach (StimDefinition stim in config.Stims)

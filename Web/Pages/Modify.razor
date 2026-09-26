@@ -90,7 +90,15 @@
                                 {
                                     <div class="moar-effect-picker" aria-label="Available effects">
                                         <p>Choose an effect to add</p>
-                                        <div>@foreach (string effect in AvailableEffects) { <button type="button" @onclick="() => AddEffect(effect)">@DisplayName(effect)</button> }</div>
+                                        <div class="moar-effect-picker__groups">
+                                            @foreach (EffectCategory category in EffectCategories.For(AvailableEffects))
+                                            {
+                                                <section class="moar-effect-picker__group moar-effect-picker__group--@category.Color" aria-label="@category.Name">
+                                                    <h3>@category.Name</h3>
+                                                    <div>@foreach (string effect in category.Effects) { <button type="button" @onclick="() => AddEffect(effect)">@DisplayName(effect)</button> }</div>
+                                                </section>
+                                            }
+                                        </div>
                                     </div>
                                 }
                             </section>
@@ -136,6 +144,10 @@
                         </aside>
                     </div>
                 }
+
+                <footer class="moar-editor-footer" role="note">
+                    <strong>Fence *</strong> currently adds an item to Fence's randomized pool; it is not guaranteed to appear in his inventory. Guaranteed Fence listings are planned for a future 1.0+ release.
+                </footer>
 
                 @if (DeleteConfirmationOpen)
                 {
@@ -358,7 +370,7 @@
 
         return defaultTrader is null
             ? new TraderDefinition { LoyaltyLevel = 1 }
-            : new TraderDefinition { Trader = defaultTrader.DisplayName, TraderId = defaultTrader.Id, LoyaltyLevel = 1 };
+            : new TraderDefinition { Trader = defaultTrader.ConfigurationName, TraderId = defaultTrader.Id, LoyaltyLevel = 1 };
     }
 
     private string ResolveSelectedTraderId(TraderDefinition trader)
@@ -381,7 +393,7 @@
         AvailableTrader? selection = AvailableTraders.FirstOrDefault(trader => string.Equals(trader.Id, traderId, StringComparison.OrdinalIgnoreCase));
         if (selection is not null)
         {
-            Draft.Trader.Trader = selection.DisplayName;
+            Draft.Trader.Trader = selection.ConfigurationName;
             Draft.Trader.TraderId = selection.Id;
         }
     }

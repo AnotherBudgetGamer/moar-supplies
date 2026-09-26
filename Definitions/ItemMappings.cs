@@ -107,9 +107,9 @@ public static class ItemMappings
         ["army-bandage"] = new("5751a25924597722c463c472"),
         ["augmentin"] = new("590c695186f7741e566b64a2"),
         ["bandage"] = new("544fb25a4bdc2dfb738b4567"),
-        ["car"] = new("590c678286f77426c9660122"),
+        ["car"] = new("590c661e86f7741e566b646a"),
         ["cat"] = new("60098af40accd37ef2175f27"),
-        ["ifak"] = new("590c661e86f7741e566b646a"),
+        ["ifak"] = new("590c678286f77426c9660122"),
         ["calok-b"] = new("5e8488fa988a8701445df1e4"),
         ["esmarch"] = new("5e831507ea0a7c419c2f9bd9"),
         ["golden-star"] = new("5751a89d24597722aa0e8db0"),
@@ -128,6 +128,19 @@ public static class ItemMappings
 
     public static bool TryGetMedicalPack(string baseItem, out BaseItemMapping mapping) =>
         SupportedMedicalPacks.TryGetValue(baseItem, out mapping!);
+
+    /// <summary>
+    /// Every vanilla template that Moar Supplies can use as a clone source.
+    /// This is used by the opt-in mapping diagnostic to exercise each source
+    /// template without maintaining a second, easy-to-drift list.
+    /// </summary>
+    public static IEnumerable<KeyValuePair<string, BaseItemMapping>> AllMappedItems =>
+        SupportedItems
+            .Concat(SupportedDrinks)
+            .Concat(SupportedFoods)
+            .Concat(SupportedMedicalPacks)
+            .GroupBy(entry => entry.Value.TemplateId, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First());
 }
 
 /// <summary>

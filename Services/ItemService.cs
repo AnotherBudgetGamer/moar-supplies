@@ -300,17 +300,18 @@ public sealed class ItemService
             return false;
         }
 
-        Dictionary<DamageEffectType, EffectsDamageProperties>? surgeryEffects = null;
-        if (medicalPack.SurgeryRestoreMultiplier is double surgeryRestoreMultiplier)
+        bool hasTreatmentCostOverride = medicalPack.LightBleedingCost is not null || medicalPack.HeavyBleedingCost is not null || medicalPack.RadiationTreatmentCost is not null;
+        Dictionary<DamageEffectType, EffectsDamageProperties>? damageEffects = null;
+        if (medicalPack.SurgeryRestoreMultiplier is not null || hasTreatmentCostOverride)
         {
             Dictionary<DamageEffectType, EffectsDamageProperties>? sourceEffects = sourceItem.Properties?.EffectsDamage;
-            if (sourceEffects is null || !sourceEffects.TryGetValue(DamageEffectType.DestroyedPart, out EffectsDamageProperties? destroyedPart))
+            if (sourceEffects is null)
             {
-                _logger.LogError("[MoarSupplies] Medical pack '{MedicalPackId}' requests a surgery-restoration multiplier, but base item '{BaseTemplateId}' cannot treat destroyed limbs.", medicalPack.Id, baseItem.TemplateId);
+                _logger.LogError("[MoarSupplies] Medical pack '{MedicalPackId}' requests treatment-effect changes, but base item '{BaseTemplateId}' has no treatment effects.", medicalPack.Id, baseItem.TemplateId);
                 return false;
             }
 
-            surgeryEffects = sourceEffects.ToDictionary(
+            damageEffects = sourceEffects.ToDictionary(
                 effect => effect.Key,
                 effect => new EffectsDamageProperties
                 {
@@ -322,8 +323,38 @@ public sealed class ItemService
                     HealthPenaltyMin = effect.Value.HealthPenaltyMin,
                     HealthPenaltyMax = effect.Value.HealthPenaltyMax
                 });
-            surgeryEffects[DamageEffectType.DestroyedPart].HealthPenaltyMin = destroyedPart.HealthPenaltyMin * surgeryRestoreMultiplier;
-            surgeryEffects[DamageEffectType.DestroyedPart].HealthPenaltyMax = destroyedPart.HealthPenaltyMax * surgeryRestoreMultiplier;
+
+            if (medicalPack.SurgeryRestoreMultiplier is double surgeryRestoreMultiplier)
+            {
+                if (!sourceEffects.TryGetValue(DamageEffectType.DestroyedPart, out EffectsDamageProperties? destroyedPart))
+                {
+                    _logger.LogError("[MoarSupplies] Medical pack '{MedicalPackId}' requests a surgery-restoration multiplier, but base item '{BaseTemplateId}' cannot treat destroyed limbs.", medicalPack.Id, baseItem.TemplateId);
+                    return false;
+                }
+
+                damageEffects[DamageEffectType.DestroyedPart].HealthPenaltyMin = destroyedPart.HealthPenaltyMin * surgeryRestoreMultiplier;
+                damageEffects[DamageEffectType.DestroyedPart].HealthPenaltyMax = destroyedPart.HealthPenaltyMax * surgeryRestoreMultiplier;
+            }
+
+            if (!ApplyTreatmentCost(DamageEffectType.LightBleeding, medicalPack.LightBleedingCost, "light bleeding") ||
+                !ApplyTreatmentCost(DamageEffectType.HeavyBleeding, medicalPack.HeavyBleedingCost, "heavy bleeding") ||
+                !ApplyTreatmentCost(DamageEffectType.RadExposure, medicalPack.RadiationTreatmentCost, "radiation exposure"))
+            {
+                return false;
+            }
+        }
+
+        bool ApplyTreatmentCost(DamageEffectType effectType, int? cost, string effectName)
+        {
+            if (cost is null) return true;
+            if (!damageEffects!.TryGetValue(effectType, out EffectsDamageProperties? effect))
+            {
+                _logger.LogError("[MoarSupplies] Medical pack '{MedicalPackId}' requests a {EffectName} treatment cost, but base item '{BaseTemplateId}' cannot treat {UnsupportedEffectName}.", medicalPack.Id, effectName, baseItem.TemplateId, effectName);
+                return false;
+            }
+
+            effect.Cost = cost.Value;
+            return true;
         }
 
         NewItemFromCloneDetails cloneDetails = new()
@@ -345,7 +376,7 @@ public sealed class ItemService
                 MaxHpResource = medicalPack.Resource,
                 HpResourceRate = medicalPack.ResourceRate,
                 MedUseTime = medUseTime,
-                EffectsDamage = surgeryEffects
+                EffectsDamage = damageEffects
             }
         };
 

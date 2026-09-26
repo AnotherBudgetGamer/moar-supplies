@@ -1081,6 +1081,17 @@
   gap: 22px;
   margin-top: 35px;
 }
+.moar-editor-footer {
+  margin-top: 24px;
+  padding: 13px 16px;
+  border-top: 1px solid rgba(250, 204, 21, 0.36);
+  color: #a1a1aa;
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+.moar-editor-footer strong {
+  color: #fde047;
+}
 .moar-editor {
   display: grid;
   gap: 16px;
@@ -1280,11 +1291,6 @@
   font-size: 0.75rem;
   font-weight: 750;
 }
-.moar-effect-picker > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-}
 .moar-effect-picker button {
   padding: 6px 8px;
   border: 1px solid rgba(82, 88, 97, 0.68);
@@ -1296,8 +1302,47 @@
   cursor: pointer;
 }
 .moar-effect-picker button:hover {
-  border-color: rgba(250, 204, 21, 0.5);
-  color: #fde047;
+  border-color: currentColor;
+  background: rgba(255, 255, 255, 0.09);
+}
+.moar-effect-picker__groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.moar-effect-picker__group {
+  padding: 11px;
+  border: 1px solid rgba(82, 88, 97, 0.62);
+  border-radius: 5px;
+  background: rgba(4, 7, 11, 0.24);
+}
+.moar-effect-picker__group h3 {
+  margin: 0 0 8px;
+  font-size: 0.69rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.moar-effect-picker__group > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.moar-effect-picker__group button {
+  color: inherit;
+}
+.moar-effect-picker__group--combat { color: #93c5fd; }
+.moar-effect-picker__group--combat button { border-color: rgba(147, 197, 253, 0.36); background: rgba(59, 130, 246, 0.07); }
+.moar-effect-picker__group--stamina { color: #86efac; }
+.moar-effect-picker__group--stamina button { border-color: rgba(134, 239, 172, 0.35); background: rgba(34, 197, 94, 0.065); }
+.moar-effect-picker__group--health { color: #67e8f9; }
+.moar-effect-picker__group--health button { border-color: rgba(103, 232, 249, 0.34); background: rgba(6, 182, 212, 0.065); }
+.moar-effect-picker__group--mind { color: #d8b4fe; }
+.moar-effect-picker__group--mind button { border-color: rgba(216, 180, 254, 0.34); background: rgba(168, 85, 247, 0.065); }
+.moar-effect-picker__group--risk { color: #fca5a5; }
+.moar-effect-picker__group--risk button { border-color: rgba(252, 165, 165, 0.36); background: rgba(239, 68, 68, 0.065); }
+.moar-effect-picker__group--other { color: #d4d4d8; }
+@media (max-width: 600px) {
+  .moar-effect-picker__groups { grid-template-columns: 1fr; }
 }
 .moar-editor-preview {
   position: sticky;

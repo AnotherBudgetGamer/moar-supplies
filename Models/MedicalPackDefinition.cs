@@ -1,5 +1,7 @@
 namespace MoarSupplies.Models;
 
+using System.Text.Json.Serialization;
+
 /// <summary>
 /// A configurable medical kit clone. The cloned item's native treatment effects
 /// are retained; resource, per-use healing, surgery restoration, and use time
@@ -17,6 +19,15 @@ public sealed class MedicalPackDefinition
     /// </summary>
     public int Resource { get; set; }
     public int ResourceRate { get; set; }
+    /// <summary>Resource consumed when treating light bleeding. Null keeps the vanilla value.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? LightBleedingCost { get; set; }
+    /// <summary>Resource consumed when treating heavy bleeding. Null keeps the vanilla value.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? HeavyBleedingCost { get; set; }
+    /// <summary>Resource consumed when treating radiation exposure. Null keeps the vanilla value.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? RadiationTreatmentCost { get; set; }
     public double? UseTimeMultiplier { get; set; }
     public double? SurgeryRestoreMultiplier { get; set; }
     public List<string> Tags { get; set; } = [];

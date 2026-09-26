@@ -15,7 +15,9 @@ public sealed class TraderDirectory
     private static readonly IReadOnlyDictionary<string, string> DisplayNameOverrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
         // SPT's base trader data uses "Arena" as Ref's nickname, while the game presents this trader as Ref.
-        ["6617beeaa9cfa777ca915b7c"] = "Ref"
+        ["6617beeaa9cfa777ca915b7c"] = "Ref",
+        // Fence uses a randomized SPT assort rather than a conventional static trader inventory.
+        ["579dc571d53a0658a154fbec"] = "Fence *"
     };
 
     private static readonly ISet<string> ExcludedTraderIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -110,4 +112,10 @@ public sealed class TraderDirectory
     }
 }
 
-public sealed record AvailableTrader(string Id, string DisplayName);
+public sealed record AvailableTrader(string Id, string DisplayName)
+{
+    /// <summary>Friendly value written to the definition, without editor-only availability markers.</summary>
+    public string ConfigurationName => Id.Equals("579dc571d53a0658a154fbec", StringComparison.OrdinalIgnoreCase)
+        ? "Fence"
+        : DisplayName;
+}
