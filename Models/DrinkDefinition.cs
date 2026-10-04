@@ -4,7 +4,7 @@ namespace MoarSupplies.Models;
 /// A friendly, user-configured drink definition. Drink resource and nutrition are
 /// deliberately separate from stim uses and timed effects.
 /// </summary>
-public sealed class DrinkDefinition
+public sealed class DrinkDefinition : ICraftableDefinition
 {
     public string Id { get; set; } = string.Empty;
     public bool Enabled { get; set; } = true;
@@ -15,4 +15,5 @@ public sealed class DrinkDefinition
     public List<string> Tags { get; set; } = [];
     public List<BuffDefinition> Buffs { get; set; } = [];
     public TraderDefinition? Trader { get; set; }
+    public CraftDefinition? Craft { get; set; }
 }

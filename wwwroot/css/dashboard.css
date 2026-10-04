@@ -1278,6 +1278,93 @@
   margin-right: 4px;
   font-size: 1rem;
 }
+.moar-crafting-ingredients {
+  display: grid;
+  gap: 10px;
+}
+.moar-crafting-ingredients__results {
+  display: grid;
+  max-height: 190px;
+  overflow-y: auto;
+  border: 1px solid rgba(161, 161, 170, 0.2);
+  border-radius: 8px;
+  background: rgba(9, 9, 11, 0.72);
+}
+.moar-crafting-ingredients__results button {
+  padding: 9px 11px;
+  border: 0;
+  border-bottom: 1px solid rgba(161, 161, 170, 0.12);
+  background: transparent;
+  color: #e4e4e7;
+  text-align: left;
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.moar-crafting-ingredients__results button:hover,
+.moar-crafting-ingredients__results button[aria-selected="true"] {
+  background: rgba(250, 204, 21, 0.11);
+  color: #fef08a;
+}
+.moar-crafting-ingredients__add-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.38fr) 1fr;
+  align-items: end;
+  gap: 12px;
+}
+.moar-crafting-ingredients__add-button {
+  justify-content: center;
+  min-height: 38px;
+}
+.moar-crafting-ingredients__hint {
+  margin: 0;
+  color: #a1a1aa;
+  font-size: 0.72rem;
+}
+.moar-crafting-ingredients__selected {
+  display: grid;
+  gap: 8px;
+}
+.moar-crafting-ingredient {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 108px auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 9px 8px 11px;
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  border-radius: 8px;
+  background: rgba(250, 204, 21, 0.07);
+  color: #fef3c7;
+  font-size: 0.77rem;
+  font-weight: 700;
+}
+.moar-crafting-ingredient label {
+  display: grid;
+  gap: 4px;
+  color: #d4d4d8;
+  font-size: 0.63rem;
+  font-weight: 750;
+}
+.moar-crafting-ingredient input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 31px;
+  border: 1px solid rgba(161, 161, 170, 0.3);
+  border-radius: 6px;
+  background: rgba(9, 9, 11, 0.74);
+  color: #f4f4f5;
+  padding: 6px 8px;
+  font: inherit;
+}
+@media (max-width: 620px) {
+  .moar-crafting-ingredients__add-row,
+  .moar-crafting-ingredient {
+    grid-template-columns: 1fr;
+  }
+  .moar-crafting-ingredient .moar-icon-button {
+    justify-self: end;
+  }
+}
 .moar-effect-picker {
   margin-top: 12px;
   padding: 14px;

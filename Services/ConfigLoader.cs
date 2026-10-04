@@ -22,6 +22,8 @@ public sealed class ConfigLoader : IOnLoad
     private readonly DrinkService _drinkService;
     private readonly FoodService _foodService;
     private readonly MedicalPackService _medicalPackService;
+    private readonly CraftingService _craftingService;
+    private readonly StimIdService _idService;
     private readonly MappedItemTestCloneService _mappedItemTestCloneService;
 
     public ConfigLoader(
@@ -34,6 +36,8 @@ public sealed class ConfigLoader : IOnLoad
         DrinkService drinkService,
         FoodService foodService,
         MedicalPackService medicalPackService,
+        CraftingService craftingService,
+        StimIdService idService,
         MappedItemTestCloneService mappedItemTestCloneService)
     {
         _logger = logger;
@@ -45,6 +49,8 @@ public sealed class ConfigLoader : IOnLoad
         _drinkService = drinkService;
         _foodService = foodService;
         _medicalPackService = medicalPackService;
+        _craftingService = craftingService;
+        _idService = idService;
         _mappedItemTestCloneService = mappedItemTestCloneService;
     }
 
@@ -138,6 +144,11 @@ public sealed class ConfigLoader : IOnLoad
                 _logger.LogError("[MoarSupplies] Registration stopped after stim '{StimId}' failed.", stim.Id);
                 return;
             }
+            if (!_craftingService.Register(stim, _idService.Create(stim.Id).ItemTemplateId))
+            {
+                _logger.LogError("[MoarSupplies] Registration stopped after craft for stim '{StimId}' failed.", stim.Id);
+                return;
+            }
 
             if (_debugSettings.Enabled)
             {
@@ -172,6 +183,11 @@ public sealed class ConfigLoader : IOnLoad
                 _logger.LogError("[MoarSupplies] Registration stopped after drink '{DrinkId}' failed.", drink.Id);
                 return;
             }
+            if (!_craftingService.Register(drink, _idService.CreateDrink(drink.Id).ItemTemplateId))
+            {
+                _logger.LogError("[MoarSupplies] Registration stopped after craft for drink '{DrinkId}' failed.", drink.Id);
+                return;
+            }
 
             createdDrinkCount++;
         }
@@ -194,6 +210,11 @@ public sealed class ConfigLoader : IOnLoad
             if (!_foodService.Register(food))
             {
                 _logger.LogError("[MoarSupplies] Registration stopped after food '{FoodId}' failed.", food.Id);
+                return;
+            }
+            if (!_craftingService.Register(food, _idService.CreateFood(food.Id).ItemTemplateId))
+            {
+                _logger.LogError("[MoarSupplies] Registration stopped after craft for food '{FoodId}' failed.", food.Id);
                 return;
             }
             createdFoodCount++;
@@ -221,6 +242,11 @@ public sealed class ConfigLoader : IOnLoad
             if (!_medicalPackService.Register(medicalPack))
             {
                 _logger.LogError("[MoarSupplies] Registration stopped after medical pack '{MedicalPackId}' failed.", medicalPack.Id);
+                return;
+            }
+            if (!_craftingService.Register(medicalPack, _idService.CreateMedicalPack(medicalPack.Id).ItemTemplateId))
+            {
+                _logger.LogError("[MoarSupplies] Registration stopped after craft for medical pack '{MedicalPackId}' failed.", medicalPack.Id);
                 return;
             }
 

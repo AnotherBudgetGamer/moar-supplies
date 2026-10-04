@@ -1,5 +1,5 @@
 param(
-    [string] $RuntimeDirectory = (Join-Path $PSScriptRoot "..\spt-read-only\SPP-Tarkov\SPT_Runtime")
+    [string] $RuntimeDirectory = (Join-Path $PSScriptRoot "..\..\SPP\SPP-Tarkov\SPT_Runtime")
 )
 
 $resolvedRuntime = Resolve-Path $RuntimeDirectory -ErrorAction Stop

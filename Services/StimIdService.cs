@@ -17,6 +17,7 @@ public sealed class StimIdService
     private const string MedicalPackItemIdNamespace = "com.anotherbudgetgamer.moarsupplies:medical-pack:item:";
     private const string MappingTestItemIdNamespace = "com.anotherbudgetgamer.moarsupplies:mapping-test:item:";
     private const string TraderAssortIdNamespace = "com.anotherbudgetgamer.moarsupplies:assort:";
+    private const string CraftRecipeIdNamespace = "com.anotherbudgetgamer.moarsupplies:craft:";
     private const string BuffKeyPrefix = "MoarSupplies_";
 
     public StimRegistrationIds Create(string stimId)
@@ -53,6 +54,9 @@ public sealed class StimIdService
 
     public string CreateMappedItemTestClone(string sourceTemplateId) =>
         CreateMongoId(MappingTestItemIdNamespace + sourceTemplateId);
+
+    public string CreateCraftRecipe(string definitionId) =>
+        CreateMongoId(CraftRecipeIdNamespace + definitionId);
 
     private static string CreateMongoId(string source)
     {

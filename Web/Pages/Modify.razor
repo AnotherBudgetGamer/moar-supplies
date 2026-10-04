@@ -105,7 +105,7 @@
 
                             <div class="moar-editor__bottom-row">
                                 <section class="moar-editor__section">
-                                    <div class="moar-editor__section-heading"><p class="moar-kicker">AVAILABILITY</p><h2>Set trader availability</h2><p>Every enabled item remains in world loot. This setting only controls whether it can be purchased from a trader.</p></div>
+                                    <div class="moar-editor__section-heading"><p class="moar-kicker">AVAILABILITY</p><h2>Set trader availability</h2><p>Configure a trader offer to make this item purchasable, or use the optional crafting section below.</p></div>
                                     <div class="moar-form-grid">
                                         <label class="moar-status-field"><span class="moar-status-field__label">@(Draft.Trader!.Enabled ? "Enabled" : "Disabled")</span><span class="moar-status-toggle"><input type="checkbox" @bind="Draft.Trader!.Enabled" /><span class="moar-status-toggle__control" aria-hidden="true"></span><span class="moar-status-toggle__description">Make this stim purchasable</span></span></label>
                                         @if (Draft.Trader!.Enabled)
@@ -116,6 +116,7 @@
                                         }
                                     </div>
                                 </section>
+                                <CraftingSection Craft="Draft.Craft" CraftChanged="craft => Draft.Craft = craft" ItemLabel="stim" />
                             </div>
                         </form>
                         <aside class="moar-editor-preview" aria-label="Definition preview">
@@ -146,7 +147,7 @@
                 }
 
                 <footer class="moar-editor-footer" role="note">
-                    <strong>Fence *</strong> currently adds an item to Fence's randomized pool; it is not guaranteed to appear in his inventory. Guaranteed Fence listings are planned for a future 1.0+ release.
+                    <strong>Fence *</strong> stock is refreshed by SPT, so a configured offer should not be treated as guaranteed after a refresh. Guaranteed Fence listings are planned for a future 1.0+ release.
                 </footer>
 
                 @if (DeleteConfirmationOpen)
@@ -452,6 +453,7 @@
         Id = source.Id, Enabled = source.Enabled, BaseItem = source.BaseItem, Uses = source.Uses, Tags = [.. source.Tags],
         Identity = new StimIdentity { Name = source.Identity.Name, ShortName = source.Identity.ShortName, Description = source.Identity.Description },
         Buffs = source.Buffs.Select(buff => new BuffDefinition { Effect = buff.Effect, Value = buff.Value, Duration = buff.Duration, Delay = buff.Delay }).ToList(),
-        Trader = source.Trader is null ? new TraderDefinition() : new TraderDefinition { Enabled = source.Trader.Enabled, Trader = source.Trader.Trader, TraderId = source.Trader.TraderId, LoyaltyLevel = source.Trader.LoyaltyLevel, Price = source.Trader.Price }
+        Trader = source.Trader is null ? new TraderDefinition() : new TraderDefinition { Enabled = source.Trader.Enabled, Trader = source.Trader.Trader, TraderId = source.Trader.TraderId, LoyaltyLevel = source.Trader.LoyaltyLevel, Price = source.Trader.Price },
+        Craft = source.Craft
     };
 }

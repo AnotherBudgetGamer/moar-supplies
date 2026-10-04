@@ -80,6 +80,10 @@
       "delay": 0
     }
   ],
+  "craft": {
+    "bench": "medStation", "benchLevel": 1, "durationSeconds": 60, "outputCount": 1,
+    "ingredients": [{ "templateId": "5d40407c86f774318526545a", "count": 1 }, { "templateId": "5751435d24597720a27126d1", "count": 1 }, { "templateId": "5d1b39a386f774252339976f", "count": 1 }, { "templateId": "544fb37f4bdc2dee738b4567", "count": 1 }]
+  },
   "trader": {
     "enabled": true,
     "trader": "therapist",

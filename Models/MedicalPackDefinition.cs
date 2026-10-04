@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 /// are retained; resource, per-use healing, surgery restoration, and use time
 /// can be replaced when the selected item supports them.
 /// </summary>
-public sealed class MedicalPackDefinition
+public sealed class MedicalPackDefinition : ICraftableDefinition
 {
     public string Id { get; set; } = string.Empty;
     public bool Enabled { get; set; } = true;
@@ -32,4 +32,5 @@ public sealed class MedicalPackDefinition
     public double? SurgeryRestoreMultiplier { get; set; }
     public List<string> Tags { get; set; } = [];
     public TraderDefinition? Trader { get; set; }
+    public CraftDefinition? Craft { get; set; }
 }

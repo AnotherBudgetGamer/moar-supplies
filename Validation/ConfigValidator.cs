@@ -15,6 +15,7 @@ public sealed partial class ConfigValidator
     private const int SupportedConfigVersion = 1;
 
     private static readonly Regex SafeStimId = CreateSafeStimIdRegex();
+    private static readonly Regex MongoId = CreateMongoIdRegex();
     private readonly TraderDirectory _traderDirectory;
 
     public ConfigValidator(TraderDirectory traderDirectory)
@@ -131,6 +132,7 @@ public sealed partial class ConfigValidator
         if (medicalPack.SurgeryRestoreMultiplier is double surgeryRestoreMultiplier && (!double.IsFinite(surgeryRestoreMultiplier) || surgeryRestoreMultiplier <= 0)) errors.Add($"{label}: field 'surgeryRestoreMultiplier' must be a finite number greater than zero when provided.");
         ValidateTags(medicalPack.Tags, label, errors);
         ValidateTrader(medicalPack.Trader, label, errors);
+        ValidateCraft(medicalPack.Craft, label, errors);
     }
 
     private void ValidateDrink(DrinkDefinition drink, int drinkIndex, HashSet<string> definitionIds, List<string> errors)
@@ -160,6 +162,7 @@ public sealed partial class ConfigValidator
         ValidateTags(drink.Tags, label, errors);
         ValidateBuffs(drink.Buffs, label, errors, supportsDirectItemEffects: false);
         ValidateTrader(drink.Trader, label, errors);
+        ValidateCraft(drink.Craft, label, errors);
     }
 
     private void ValidateFood(FoodDefinition food, int foodIndex, HashSet<string> definitionIds, List<string> errors)
@@ -177,6 +180,7 @@ public sealed partial class ConfigValidator
         if (food.Nutrition is not null && food.Nutrition.Hydration == 0 && food.Nutrition.Energy == 0) errors.Add($"{label}: requires hydration or energy nutrition.");
         ValidateTags(food.Tags, label, errors);
         ValidateTrader(food.Trader, label, errors);
+        ValidateCraft(food.Craft, label, errors);
     }
 
     private void ValidateStim(StimDefinition stim, int stimIndex, HashSet<string> stimIds, List<string> errors)
@@ -239,6 +243,33 @@ public sealed partial class ConfigValidator
         ValidateTags(stim, label, errors);
         ValidateBuffs(stim, label, errors);
         ValidateTrader(stim, label, errors);
+        ValidateCraft(stim.Craft, label, errors);
+    }
+
+    private static void ValidateCraft(CraftDefinition? craft, string label, List<string> errors)
+    {
+        if (craft?.Enabled != true) return;
+        string craftLabel = $"{label}: craft";
+        if (!CraftingService.IsSupportedBench(craft.Bench)) errors.Add($"{craftLabel}.bench '{craft.Bench}' is not supported.");
+        if (craft.BenchLevel is < 1 or > 3) errors.Add($"{craftLabel}.benchLevel must be between 1 and 3.");
+        if (craft.DurationSeconds <= 0) errors.Add($"{craftLabel}.durationSeconds must be greater than zero.");
+        if (craft.OutputCount <= 0) errors.Add($"{craftLabel}.outputCount must be greater than zero.");
+        if (craft.Ingredients is null || craft.Ingredients.Count == 0)
+        {
+            errors.Add($"{craftLabel}.ingredients must contain at least one item.");
+            return;
+        }
+
+        HashSet<string> templateIds = new(StringComparer.OrdinalIgnoreCase);
+        for (int index = 0; index < craft.Ingredients.Count; index++)
+        {
+            CraftIngredientDefinition? ingredient = craft.Ingredients[index];
+            string ingredientLabel = $"{craftLabel}.ingredients[{index}]";
+            if (ingredient is null) { errors.Add($"{ingredientLabel} must be an object."); continue; }
+            if (!MongoId.IsMatch(ingredient.TemplateId)) errors.Add($"{ingredientLabel}.templateId must be a 24-character hexadecimal SPT item ID.");
+            else if (!templateIds.Add(ingredient.TemplateId)) errors.Add($"{ingredientLabel}.templateId duplicates another craft ingredient.");
+            if (ingredient.Count <= 0) errors.Add($"{ingredientLabel}.count must be greater than zero.");
+        }
     }
 
     private static void ValidateTags(StimDefinition stim, string label, List<string> errors) => ValidateTags(stim.Tags, label, errors);
@@ -385,4 +416,7 @@ public sealed partial class ConfigValidator
 
     [GeneratedRegex("^[a-z0-9]+(?:-[a-z0-9]+)*$")]
     private static partial Regex CreateSafeStimIdRegex();
+
+    [GeneratedRegex("^[a-f0-9]{24}$", RegexOptions.IgnoreCase)]
+    private static partial Regex CreateMongoIdRegex();
 }

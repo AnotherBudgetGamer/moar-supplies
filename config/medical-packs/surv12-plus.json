@@ -11,6 +11,10 @@
   "resourceRate": 0,
   "surgeryRestoreMultiplier": 1.2,
   "tags": ["medical", "test", "surgery"],
+  "craft": {
+    "bench": "medStation", "benchLevel": 1, "durationSeconds": 60, "outputCount": 1,
+    "ingredients": [{ "templateId": "5d1b3a5d86f774252167ba22", "count": 5 }, { "templateId": "619cc01e0a7c3a1a2731940c", "count": 5 }, { "templateId": "59e361e886f774176c10a2a5", "count": 2 }, { "templateId": "5d1b3f2d86f774253763b735", "count": 2 }]
+  },
   "trader": {
     "enabled": true,
     "trader": "therapist",

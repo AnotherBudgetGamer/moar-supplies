@@ -1,11 +1,11 @@
 # Moar Supplies
 
-**Moar Supplies** is a server mod for **SPT 4.1.2** that lets you create, tune, and sell configurable consumable items without working with T***** template IDs or SPT database structures.
+**Moar Supplies** is a server mod for **SPT 4.1.2** that lets you create, tune, and sell configurable consumable items without working with SPT template IDs or database structures for base items, effects, and traders.
 
 It includes a built-in web workshop for everyday editing and a clear JSON format for anyone who prefers to work directly with files. Define an item's identity, base item, uses, effects, timing, price, and trader; Moar Supplies turns that friendly definition into a persistent in-game supply.
 
-> **Version:** 0.6.1  
-> **SPT compatibility:** 4.1.x (tested with 4.1.2; `~4.1.2`)  
+> **Version:** 0.8.5<br>
+> **SPT compatibility:** 4.1.x (tested with 4.1.2; `~4.1.2`)<br>
 > **License:** All Rights Reserved
 
 ![Moar Supplies item editor](wwwroot/assets/stim-basics.png)
@@ -17,7 +17,7 @@ It includes a built-in web workshop for everyday editing and a clear JSON format
 - Uses readable names such as `propital`, `healthRate`, and `therapist` instead of raw SPT IDs.
 - Lets you add beneficial effects, tradeoffs, durations, and delayed effects.
 - Gives each definition stable internal IDs, so items already in a profile remain valid after a normal server restart.
-- Adds enabled items to world loot and, when selected, to supported traders with a configurable rouble price and loyalty level. `Fence *` adds an item to Fence's randomized pool rather than guaranteeing a listing.
+- Adds configured items to supported traders with a configurable rouble price and loyalty level, and can register optional hideout crafts.
 - Provides a server-side web workshop to browse, create, edit, enable/disable, and delete definitions.
 - Stores definitions as one readable JSON file per item and validates the complete configuration before registering anything.
 
@@ -47,10 +47,10 @@ The web interface is the recommended way to manage items and supplies. It is des
 3. Choose a base item and number of uses.
 4. Enter the player-facing name, short name, and description.
 5. Add effects and set each effect's value, duration, and optional delay.
-6. Optionally make the item purchasable through a supported trader. All enabled items remain available in world loot; this setting only controls trader sales. `Fence *` is a randomized-pool selection, not a guaranteed offer.
+6. Optionally make the item purchasable through a supported trader or configure a hideout craft. `Fence *` stock is refreshed by SPT and should not be treated as a guaranteed listing.
 7. Save the definition, then **restart the SPT server** before starting the game to apply it in-game.
 
-Saved definitions are written to `config/stims/`, one file per item. The workshop tells you about validation errors before it writes a change.
+Saved definitions are written to their type-specific directory under `config/`, one file per item. The workshop tells you about validation errors before it writes a change.
 
 ![Definition database](wwwroot/assets/database.png)
 
@@ -147,10 +147,30 @@ Each file in `config/stims/` contains one item definition. This is the full shap
 | `uses` | Number of uses provided by the new item. Must be greater than zero. |
 | `tags` | Optional workshop labels; up to eight, each 32 characters or fewer. They do not change gameplay. |
 | `buffs` | An array of effects. Each effect has a duration in seconds (maximum 1,800 seconds / 30 minutes) and may have a delayed start. |
-| `trader` | Optional trader availability. Set `enabled` to `false` to keep the item out of trader inventories; enabled items remain available in world loot. `Fence` is an exception: it adds the item to Fence's randomized pool and does not guarantee an inventory listing. |
+| `trader` | Optional trader availability. Set `enabled` to `false` to keep the item out of trader inventories. `Fence` stock is refreshed by SPT and should not be treated as a guaranteed inventory listing. |
 | `trader.traderId` | Optional stable SPT trader ID. The workshop writes this automatically for every selection; it lets Moar Supplies target a modded trader reliably while retaining its friendly name. |
+| `craft` | Optional hideout recipe. When enabled, the item is produced at the selected bench with the configured ingredients. |
 
 Definitions are loaded as a complete set. If any definition is invalid, Moar Supplies reports the errors and registers no items, preventing a partly updated setup.
+
+### Hideout crafting
+
+Add a `craft` block to any stim, drink, food, or medical-pack definition to make it craftable. Recipes use native SPT item template IDs for ingredients; this keeps every vanilla item (and compatible mod-added items) available without maintaining a second friendly-name mapping. Supported benches are `medStation`, `kitchen`, `heating`, `waterCollector`, `workbench`, and `intelligenceCenter`.
+
+```json
+"craft": {
+  "bench": "medStation",
+  "benchLevel": 1,
+  "durationSeconds": 60,
+  "outputCount": 1,
+  "requiresFuel": false,
+  "ingredients": [
+    { "templateId": "5d1b3a5d86f774252167ba22", "count": 1 }
+  ]
+}
+```
+
+Recipe IDs are generated deterministically from the definition ID. A recipe needs at least one ingredient, valid 24-character SPT template IDs, positive counts, a bench level from 1 through 3, and positive duration/output values. The workshop lets you enable crafting, configure the bench, level, timer, output count, and fuel requirement, then search the live SPT item catalog to add, edit, or remove ingredients.
 
 ### Supported base items
 
@@ -201,7 +221,7 @@ Supported medical bases: `afak`, `ai2`, `car`, `ifak`, `salewa`, `grizzly`, `san
 
 ### Supported traders
 
-All vanilla traders are supported: `therapist`, `prapor`, `skier`, `peacekeeper`, `mechanic`, `ragman`, `jaeger`, and `fence`. The workshop labels Fence as `Fence *`: selecting it adds the item to Fence's randomized pool after a Fence refresh, so it can appear but is not guaranteed to be listed. All other listed traders receive a direct, persistent offer at the configured price and loyalty level. The workshop also discovers every enabled trader mod that has registered with SPT, displaying its friendly trader name while saving its stable internal ID. Trader availability controls purchasing only: items not available from a trader remain in world loot. Trader loyalty levels must be from 1 through 4, and a sale price must be greater than zero.
+All vanilla traders are supported: `therapist`, `prapor`, `skier`, `peacekeeper`, `mechanic`, `ragman`, `jaeger`, and `fence`. The workshop labels Fence as `Fence *` because SPT refreshes his stock; a configured Fence offer should not be treated as guaranteed after a refresh. Other traders receive a configured offer at the selected price and loyalty level. The workshop also discovers every enabled trader mod that has registered with SPT, displaying its friendly trader name while saving its stable internal ID. Trader availability controls purchasing only; an item can instead be made available through an optional hideout craft. Trader loyalty levels must be from 1 through 4, and a sale price must be greater than zero.
 
 ### Supported effects
 
@@ -245,7 +265,7 @@ Version 1.0 focuses on a stable, user-editable catalog of vanilla-base supplies:
 
 After 1.0, the first experimental track is **cross-item timed effects**. This would test attaching Moar Supplies buffs and debuffs to item classes that do not normally use them—for example, a bandage that applies a short health-regeneration effect after treating bleeding. It is intentionally deferred because each medical item type must be validated in raid for client behavior, resource consumption, animations, effects timing, and profile safety before it can be considered stable.
 
-The 1.0+ workshop roadmap also includes **guaranteed Fence listings**, so a definition assigned to Fence can remain in his active inventory at its configured price instead of only joining his randomized pool. It also includes a **stim-definition backup/export** option, so users can easily copy their custom stim definitions somewhere safe before making changes. A companion **delete all shipped stims** control will let users remove the full set of default Moar Supplies stimulants at once when they prefer not to use them.
+The 1.0+ workshop roadmap also includes **guaranteed Fence listings**, so a definition assigned to Fence can remain in his active inventory at its configured price across stock refreshes. It also includes a **stim-definition backup/export** option, so users can easily copy their custom stim definitions somewhere safe before making changes. A companion **delete all shipped stims** control will let users remove the full set of default Moar Supplies stimulants at once when they prefer not to use them.
 
 Experimental effects will remain opt-in and clearly labeled until they have been tested across the supported item families.
 
@@ -278,13 +298,13 @@ The main code is organized as follows:
 
 ### Build locally
 
-The project expects the SPT runtime assemblies from a local SPT 4.1.2 installation. By default, it looks for them at `../spt-read-only/SPP-T*****/SPT_Runtime/` relative to the project. Point MSBuild at another runtime with `SptRuntimeDirectory` if needed.
+The project expects the SPT runtime assemblies from a local SPT 4.1.2 installation. By default, it looks for them at `../../SPP/SPP-Tarkov/SPT_Runtime/` relative to the project. Point MSBuild at another runtime with `SptRuntimeDirectory` if needed.
 
 ```powershell
 dotnet build -c Release
 ```
 
-This creates `ReleaseZip/AnotherBudgetGamer-MoarSupplies-0.6.1.zip`, ready to extract into an SPT installation.
+This creates `ReleaseZip/AnotherBudgetGamer-MoarSupplies-0.8.5.zip`, ready to extract into an SPT installation.
 
 To use a different runtime location:
 
