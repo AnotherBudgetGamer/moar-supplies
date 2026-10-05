@@ -1474,6 +1474,25 @@
 .moar-editor-preview__status {
   min-height: 0;
 }
+.moar-profile-safety {
+  padding: 16px 18px;
+  border: 1px solid rgba(251, 146, 60, 0.48);
+  border-radius: 7px;
+  background: rgba(154, 52, 18, 0.16);
+  color: #fed7aa;
+}
+.moar-profile-safety strong {
+  display: block;
+  color: #fdba74;
+  font-size: 0.86rem;
+}
+.moar-profile-safety p:not(.moar-kicker) {
+  margin: 7px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+.moar-profile-safety__recovery { color: #e4e4e7; }
+.moar-profile-safety code { color: #fde68a; font-size: 0.75rem; }
 .moar-editor-preview dl div {
   padding: 9px;
   border: 1px solid rgba(82, 88, 97, 0.5);

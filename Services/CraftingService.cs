@@ -23,13 +23,15 @@ public sealed class CraftingService
         };
 
     private readonly ILogger<CraftingService> _logger;
+    private readonly DebugSettings _debugSettings;
     private readonly HideoutTable _hideoutTable;
     private readonly TemplateTable _templateTable;
     private readonly StimIdService _idService;
 
-    public CraftingService(ILogger<CraftingService> logger, HideoutTable hideoutTable, TemplateTable templateTable, StimIdService idService)
+    public CraftingService(ILogger<CraftingService> logger, DebugSettings debugSettings, HideoutTable hideoutTable, TemplateTable templateTable, StimIdService idService)
     {
         _logger = logger;
+        _debugSettings = debugSettings;
         _hideoutTable = hideoutTable;
         _templateTable = templateTable;
         _idService = idService;
@@ -94,7 +96,10 @@ public sealed class CraftingService
 
         _hideoutTable.Production.Recipes ??= [];
         _hideoutTable.Production.Recipes.Add(recipe);
-        _logger.LogInformation("[MoarSupplies] Registered {Bench} craft '{DefinitionId}' ({RecipeId}).", craft.Bench, definition.Id, recipeId);
+        if (_debugSettings.Enabled)
+        {
+            _logger.LogInformation("[MoarSupplies] Registered {Bench} craft '{DefinitionId}' ({RecipeId}).", craft.Bench, definition.Id, recipeId);
+        }
         return true;
     }
 

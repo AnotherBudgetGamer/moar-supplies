@@ -130,6 +130,7 @@ public sealed partial class ConfigValidator
         if (medicalPack.RadiationTreatmentCost < 0) errors.Add($"{label}: field 'radiationTreatmentCost' must be zero or greater when provided.");
         if (medicalPack.UseTimeMultiplier is double useTimeMultiplier && (!double.IsFinite(useTimeMultiplier) || useTimeMultiplier <= 0)) errors.Add($"{label}: field 'useTimeMultiplier' must be a finite number greater than zero when provided.");
         if (medicalPack.SurgeryRestoreMultiplier is double surgeryRestoreMultiplier && (!double.IsFinite(surgeryRestoreMultiplier) || surgeryRestoreMultiplier <= 0)) errors.Add($"{label}: field 'surgeryRestoreMultiplier' must be a finite number greater than zero when provided.");
+        ValidateWorldLootWeight(medicalPack.WorldLootWeight, label, errors);
         ValidateTags(medicalPack.Tags, label, errors);
         ValidateTrader(medicalPack.Trader, label, errors);
         ValidateCraft(medicalPack.Craft, label, errors);
@@ -159,6 +160,7 @@ public sealed partial class ConfigValidator
         if (drink.Nutrition is null) errors.Add($"{label}: field 'nutrition' is required.");
         else if (!double.IsFinite(drink.Nutrition.Hydration) || !double.IsFinite(drink.Nutrition.Energy)) errors.Add($"{label}: nutrition values must be finite numbers.");
         if (drink.Nutrition is not null && drink.Nutrition.Hydration == 0 && drink.Nutrition.Energy == 0 && (drink.Buffs is null || drink.Buffs.Count == 0)) errors.Add($"{label}: requires nutrition or at least one timed effect.");
+        ValidateWorldLootWeight(drink.WorldLootWeight, label, errors);
         ValidateTags(drink.Tags, label, errors);
         ValidateBuffs(drink.Buffs, label, errors, supportsDirectItemEffects: false);
         ValidateTrader(drink.Trader, label, errors);
@@ -178,6 +180,7 @@ public sealed partial class ConfigValidator
         if (food.Nutrition is null) errors.Add($"{label}: field 'nutrition' is required.");
         else if (!double.IsFinite(food.Nutrition.Hydration) || !double.IsFinite(food.Nutrition.Energy)) errors.Add($"{label}: nutrition values must be finite numbers.");
         if (food.Nutrition is not null && food.Nutrition.Hydration == 0 && food.Nutrition.Energy == 0) errors.Add($"{label}: requires hydration or energy nutrition.");
+        ValidateWorldLootWeight(food.WorldLootWeight, label, errors);
         ValidateTags(food.Tags, label, errors);
         ValidateTrader(food.Trader, label, errors);
         ValidateCraft(food.Craft, label, errors);
@@ -240,6 +243,8 @@ public sealed partial class ConfigValidator
             errors.Add($"{label}: field 'uses' must be greater than zero.");
         }
 
+        ValidateWorldLootWeight(stim.WorldLootWeight, label, errors);
+
         ValidateTags(stim, label, errors);
         ValidateBuffs(stim, label, errors);
         ValidateTrader(stim, label, errors);
@@ -269,6 +274,14 @@ public sealed partial class ConfigValidator
             if (!MongoId.IsMatch(ingredient.TemplateId)) errors.Add($"{ingredientLabel}.templateId must be a 24-character hexadecimal SPT item ID.");
             else if (!templateIds.Add(ingredient.TemplateId)) errors.Add($"{ingredientLabel}.templateId duplicates another craft ingredient.");
             if (ingredient.Count <= 0) errors.Add($"{ingredientLabel}.count must be greater than zero.");
+        }
+    }
+
+    private static void ValidateWorldLootWeight(double weight, string label, List<string> errors)
+    {
+        if (!double.IsFinite(weight) || weight < 0)
+        {
+            errors.Add($"{label}: field 'worldLootWeight' must be a finite number that is zero or greater.");
         }
     }
 

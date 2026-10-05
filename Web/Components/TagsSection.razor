@@ -1,0 +1,28 @@
+<section class="moar-editor__section">
+    <div class="moar-editor__section-heading">
+        <p class="moar-kicker">TAGS</p>
+        <h2>Label this item for the workshop</h2>
+        <p>Use comma-separated labels to organize your supplies. Tags do not change in-game behavior; update them when an item's effects or purpose changes.</p>
+    </div>
+    <div class="moar-form-grid">
+        <label class="moar-form-grid__full">
+            Tags <span>Up to 8 labels, 32 characters each</span>
+            <input value="@TagsText" @oninput="UpdateTags" placeholder="e.g. combat, recovery, rare" />
+        </label>
+    </div>
+</section>
+
+@code {
+    [Parameter] public List<string> Tags { get; set; } = [];
+    [Parameter] public EventCallback<List<string>> TagsChanged { get; set; }
+
+    private string TagsText => string.Join(", ", Tags);
+
+    private Task UpdateTags(ChangeEventArgs changeEvent)
+    {
+        List<string> tags = (changeEvent.Value?.ToString() ?? string.Empty)
+            .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .ToList();
+        return TagsChanged.InvokeAsync(tags);
+    }
+}

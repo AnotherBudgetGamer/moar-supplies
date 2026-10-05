@@ -23,6 +23,7 @@ public sealed class ConfigLoader : IOnLoad
     private readonly FoodService _foodService;
     private readonly MedicalPackService _medicalPackService;
     private readonly CraftingService _craftingService;
+    private readonly WorldLootService _worldLootService;
     private readonly StimIdService _idService;
     private readonly MappedItemTestCloneService _mappedItemTestCloneService;
 
@@ -37,6 +38,7 @@ public sealed class ConfigLoader : IOnLoad
         FoodService foodService,
         MedicalPackService medicalPackService,
         CraftingService craftingService,
+        WorldLootService worldLootService,
         StimIdService idService,
         MappedItemTestCloneService mappedItemTestCloneService)
     {
@@ -50,6 +52,7 @@ public sealed class ConfigLoader : IOnLoad
         _foodService = foodService;
         _medicalPackService = medicalPackService;
         _craftingService = craftingService;
+        _worldLootService = worldLootService;
         _idService = idService;
         _mappedItemTestCloneService = mappedItemTestCloneService;
     }
@@ -114,7 +117,9 @@ public sealed class ConfigLoader : IOnLoad
             _logger.LogInformation("[MoarSupplies] Loaded {MedicalPackCount} medical-pack definition(s).", config.MedicalPacks.Count);
         }
 
+        List<WorldLootInjection> worldLootInjections = [];
         int createdStimCount = 0;
+        int registeredStimCraftCount = 0;
         if (_debugSettings.Enabled)
         {
             _logger.LogInformation("[MoarSupplies] ===== Stimulant definitions =====");
@@ -149,6 +154,9 @@ public sealed class ConfigLoader : IOnLoad
                 _logger.LogError("[MoarSupplies] Registration stopped after craft for stim '{StimId}' failed.", stim.Id);
                 return;
             }
+            if (stim.Craft?.Enabled == true) registeredStimCraftCount++;
+            ItemMappings.TryGet(stim.BaseItem, out BaseItemMapping stimBaseItem);
+            worldLootInjections.Add(new WorldLootInjection(stimBaseItem.TemplateId, _idService.Create(stim.Id).ItemTemplateId, stim.WorldLootWeight));
 
             if (_debugSettings.Enabled)
             {
@@ -159,6 +167,7 @@ public sealed class ConfigLoader : IOnLoad
         }
 
         int createdDrinkCount = 0;
+        int registeredDrinkCraftCount = 0;
         if (_debugSettings.Enabled)
         {
             _logger.LogInformation("[MoarSupplies] ===== Drink definitions =====");
@@ -188,12 +197,17 @@ public sealed class ConfigLoader : IOnLoad
                 _logger.LogError("[MoarSupplies] Registration stopped after craft for drink '{DrinkId}' failed.", drink.Id);
                 return;
             }
+            if (drink.Craft?.Enabled == true) registeredDrinkCraftCount++;
+            ItemMappings.TryGetDrink(drink.BaseItem, out BaseItemMapping drinkBaseItem);
+            worldLootInjections.Add(new WorldLootInjection(drinkBaseItem.TemplateId, _idService.CreateDrink(drink.Id).ItemTemplateId, drink.WorldLootWeight));
 
             createdDrinkCount++;
         }
 
         int createdMedicalPackCount = 0;
+        int registeredMedicalPackCraftCount = 0;
         int createdFoodCount = 0;
+        int registeredFoodCraftCount = 0;
         if (_debugSettings.Enabled) _logger.LogInformation("[MoarSupplies] ===== Food definitions =====");
         foreach (FoodDefinition food in config.Foods)
         {
@@ -217,6 +231,9 @@ public sealed class ConfigLoader : IOnLoad
                 _logger.LogError("[MoarSupplies] Registration stopped after craft for food '{FoodId}' failed.", food.Id);
                 return;
             }
+            if (food.Craft?.Enabled == true) registeredFoodCraftCount++;
+            ItemMappings.TryGetFood(food.BaseItem, out BaseItemMapping foodBaseItem);
+            worldLootInjections.Add(new WorldLootInjection(foodBaseItem.TemplateId, _idService.CreateFood(food.Id).ItemTemplateId, food.WorldLootWeight));
             createdFoodCount++;
         }
 
@@ -249,6 +266,9 @@ public sealed class ConfigLoader : IOnLoad
                 _logger.LogError("[MoarSupplies] Registration stopped after craft for medical pack '{MedicalPackId}' failed.", medicalPack.Id);
                 return;
             }
+            if (medicalPack.Craft?.Enabled == true) registeredMedicalPackCraftCount++;
+            ItemMappings.TryGetMedicalPack(medicalPack.BaseItem, out BaseItemMapping medicalPackBaseItem);
+            worldLootInjections.Add(new WorldLootInjection(medicalPackBaseItem.TemplateId, _idService.CreateMedicalPack(medicalPack.Id).ItemTemplateId, medicalPack.WorldLootWeight));
 
             createdMedicalPackCount++;
         }
@@ -257,6 +277,19 @@ public sealed class ConfigLoader : IOnLoad
         _logger.LogInformation("[MoarSupplies] {DrinkCount} drink(s) created.", createdDrinkCount);
         _logger.LogInformation("[MoarSupplies] {FoodCount} food item(s) created.", createdFoodCount);
         _logger.LogInformation("[MoarSupplies] {MedicalPackCount} medical pack(s) created.", createdMedicalPackCount);
+        int totalCraftCount = registeredStimCraftCount + registeredDrinkCraftCount + registeredFoodCraftCount + registeredMedicalPackCraftCount;
+        if (totalCraftCount > 0)
+        {
+            _logger.LogInformation(
+                "[MoarSupplies] Registered {CraftCount} craftable item(s): {StimCount} stim(s), {DrinkCount} drink(s), {FoodCount} food item(s), {MedicalPackCount} medical pack(s).",
+                totalCraftCount,
+                registeredStimCraftCount,
+                registeredDrinkCraftCount,
+                registeredFoodCraftCount,
+                registeredMedicalPackCraftCount);
+        }
+        int worldLootEntryCount = _worldLootService.Register(worldLootInjections);
+        _logger.LogInformation("[MoarSupplies] Added {WorldLootEntryCount} custom supply entry(s) to static world-loot pools.", worldLootEntryCount);
         _mappedItemTestCloneService.CreateMissingMappedItemClones(config);
     }
 

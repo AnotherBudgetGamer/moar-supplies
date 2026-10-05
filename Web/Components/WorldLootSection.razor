@@ -1,0 +1,20 @@
+<section class="moar-editor__section">
+    <div class="moar-editor__section-heading">
+        <p class="moar-kicker">WORLD LOOT</p>
+        <h2>Control how often this item spawns</h2>
+        <p>The default weight of <strong>1</strong> matches the selected vanilla base item. Raise it to make this item claim more of that base item's world-loot chance; lower it to make it rarer. Set it to <strong>0</strong> to keep the item out of world loot.</p>
+    </div>
+    <div class="moar-form-grid">
+        <label>
+            Spawn weight <span>1 = vanilla base-item weight</span>
+            <input type="number" min="0" step="0.1" @bind="Weight" @bind:after="NotifyChanged" />
+        </label>
+    </div>
+</section>
+
+@code {
+    [Parameter] public double Weight { get; set; } = 1;
+    [Parameter] public EventCallback<double> WeightChanged { get; set; }
+
+    private Task NotifyChanged() => WeightChanged.InvokeAsync(Weight);
+}

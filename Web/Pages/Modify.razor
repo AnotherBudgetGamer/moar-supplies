@@ -54,9 +54,10 @@
                                 <div class="moar-form-grid">
                                     <label>Base stim<select @bind="Draft.BaseItem">@foreach (string item in BaseItems) { <option value="@item">@DisplayName(item)</option> }</select></label>
                                     <label>Uses<select @bind="Draft.Uses">@foreach (int uses in Enumerable.Range(1, 5)) { <option value="@uses">@uses use@(uses == 1 ? string.Empty : "s")</option> }</select></label>
-                                    <div class="moar-tag-field moar-form-grid__full"><span>Tags <small>(prototype display)</small></span><div class="moar-tag-list">@foreach (string tag in Draft.Tags) { <span>@tag</span> }</div></div>
                                 </div>
                             </section>
+
+                            <ProfileSafetyNotice IsCreating="IsCreating" OriginalId="StimId" CurrentId="Draft.Id" IsEnabled="Draft.Enabled" />
 
                             <section class="moar-editor__section">
                                 <div class="moar-editor__section-heading"><p class="moar-kicker">IDENTITY</p><h2>What players see</h2></div>
@@ -103,6 +104,7 @@
                                 }
                             </section>
 
+                            <TagsSection Tags="Draft.Tags" TagsChanged="tags => Draft.Tags = tags" />
                             <div class="moar-editor__bottom-row">
                                 <section class="moar-editor__section">
                                     <div class="moar-editor__section-heading"><p class="moar-kicker">AVAILABILITY</p><h2>Set trader availability</h2><p>Configure a trader offer to make this item purchasable, or use the optional crafting section below.</p></div>
@@ -116,6 +118,7 @@
                                         }
                                     </div>
                                 </section>
+                                <WorldLootSection Weight="Draft.WorldLootWeight" WeightChanged="weight => Draft.WorldLootWeight = weight" />
                                 <CraftingSection Craft="Draft.Craft" CraftChanged="craft => Draft.Craft = craft" ItemLabel="stim" />
                             </div>
                         </form>
@@ -156,7 +159,7 @@
                         <section class="moar-delete-dialog" role="alertdialog" aria-modal="true" aria-labelledby="moar-delete-dialog-title" aria-describedby="moar-delete-dialog-description" @onclick:stopPropagation>
                             <p class="moar-kicker">DELETE STIM</p>
                             <h2 id="moar-delete-dialog-title">Delete @Draft?.Identity.Name?</h2>
-                            <p id="moar-delete-dialog-description">This will completely remove the definition file from the database. It cannot be undone.</p>
+                            <p id="moar-delete-dialog-description">This will completely remove the definition file from the database. It cannot be undone. Remove or consume every copy from PMC and scav inventories first, or back up the profile before restarting SPT.</p>
                             @if (DeleteErrors.Count > 0)
                             {
                                 <div class="moar-save-message moar-save-message--error" role="alert"><strong>Could not delete</strong><ul>@foreach (string error in DeleteErrors) { <li>@error</li>}</ul></div>
@@ -450,7 +453,7 @@
     private static string DisplayName(string value) => System.Text.RegularExpressions.Regex.Replace(value, "(?<!^)([A-Z])", " $1");
     private static StimDefinition Copy(StimDefinition source) => new()
     {
-        Id = source.Id, Enabled = source.Enabled, BaseItem = source.BaseItem, Uses = source.Uses, Tags = [.. source.Tags],
+        Id = source.Id, Enabled = source.Enabled, BaseItem = source.BaseItem, Uses = source.Uses, Tags = [.. source.Tags], WorldLootWeight = source.WorldLootWeight,
         Identity = new StimIdentity { Name = source.Identity.Name, ShortName = source.Identity.ShortName, Description = source.Identity.Description },
         Buffs = source.Buffs.Select(buff => new BuffDefinition { Effect = buff.Effect, Value = buff.Value, Duration = buff.Duration, Delay = buff.Delay }).ToList(),
         Trader = source.Trader is null ? new TraderDefinition() : new TraderDefinition { Enabled = source.Trader.Enabled, Trader = source.Trader.Trader, TraderId = source.Trader.TraderId, LoyaltyLevel = source.Trader.LoyaltyLevel, Price = source.Trader.Price },

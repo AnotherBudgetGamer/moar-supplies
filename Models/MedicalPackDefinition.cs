@@ -31,6 +31,8 @@ public sealed class MedicalPackDefinition : ICraftableDefinition
     public double? UseTimeMultiplier { get; set; }
     public double? SurgeryRestoreMultiplier { get; set; }
     public List<string> Tags { get; set; } = [];
+    /// <summary>Relative world-loot weight. One equals the vanilla base item's weight.</summary>
+    public double WorldLootWeight { get; set; } = 1;
     public TraderDefinition? Trader { get; set; }
     public CraftDefinition? Craft { get; set; }
 }

@@ -13,6 +13,8 @@ public sealed class FoodDefinition : ICraftableDefinition
     public int Resource { get; set; }
     public DrinkNutrition Nutrition { get; set; } = new();
     public List<string> Tags { get; set; } = [];
+    /// <summary>Relative world-loot weight. One equals the vanilla base item's weight.</summary>
+    public double WorldLootWeight { get; set; } = 1;
     public TraderDefinition? Trader { get; set; } = new();
     public CraftDefinition? Craft { get; set; }
 }

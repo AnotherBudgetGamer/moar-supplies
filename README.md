@@ -18,6 +18,7 @@ It includes a built-in web workshop for everyday editing and a clear JSON format
 - Lets you add beneficial effects, tradeoffs, durations, and delayed effects.
 - Gives each definition stable internal IDs, so items already in a profile remain valid after a normal server restart.
 - Adds configured items to supported traders with a configurable rouble price and loyalty level, and can register optional hideout crafts.
+- Adds enabled supplies to the static containers and dynamic loose-loot spawn points where their selected vanilla base item can spawn.
 - Provides a server-side web workshop to browse, create, edit, enable/disable, and delete definitions.
 - Stores definitions as one readable JSON file per item and validates the complete configuration before registering anything.
 
@@ -112,6 +113,7 @@ Each file in `config/stims/` contains one item definition. This is the full shap
   },
   "baseItem": "propital",
   "uses": 1,
+  "worldLootWeight": 1,
   "tags": ["combat", "example"],
   "buffs": [
     {
@@ -145,6 +147,7 @@ Each file in `config/stims/` contains one item definition. This is the full shap
 | `identity` | The name, short name, and description shown to players. All three are required. |
 | `baseItem` | The vanilla consumable to clone. See [Supported base items](#supported-base-items). |
 | `uses` | Number of uses provided by the new item. Must be greater than zero. |
+| `worldLootWeight` | Optional relative world-loot weight. The default is `1`, equal to the selected vanilla base item. Raise it to make the custom item more common, lower it to make it rarer, or set it to `0` to exclude it from world loot. |
 | `tags` | Optional workshop labels; up to eight, each 32 characters or fewer. They do not change gameplay. |
 | `buffs` | An array of effects. Each effect has a duration in seconds (maximum 1,800 seconds / 30 minutes) and may have a delayed start. |
 | `trader` | Optional trader availability. Set `enabled` to `false` to keep the item out of trader inventories. `Fence` stock is refreshed by SPT and should not be treated as a guaranteed inventory listing. |
@@ -152,6 +155,14 @@ Each file in `config/stims/` contains one item definition. This is the full shap
 | `craft` | Optional hideout recipe. When enabled, the item is produced at the selected bench with the configured ingredients. |
 
 Definitions are loaded as a complete set. If any definition is invalid, Moar Supplies reports the errors and registers no items, preventing a partly updated setup.
+
+### World loot
+
+Every enabled supply is added automatically to both the static-container and dynamic loose-loot pools used by its selected vanilla base item. There is no per-map setup: a custom AFAK appears only where an AFAK can appear, and a custom drink follows its selected drink's world-loot coverage.
+
+`worldLootWeight` controls a custom item's share of its base item's original world-loot chance. The vanilla item has a weight of `1`; a custom item with the default weight of `1` is equally likely, `0.5` is half as likely, and `5` is five times as likely. All shares are normalized to preserve the pool's total weight, so custom variants are discoverable without increasing the overall density of that kind of loot. Airdrops are unchanged.
+
+**0.8.5 test status:** Static-container spawning is confirmed in raid with newly created custom croutons and pineapple juice. Dynamic loose-loot injection is implemented but remains pending in-raid verification; it will be tested in a longer raid before the 1.0 release candidate is promoted to `main` and submitted to Forge.
 
 ### Hideout crafting
 
@@ -256,8 +267,8 @@ Read the server log. Moar Supplies validates every definition before making any 
 **An item vanished after I changed it**
 Check whether its `enabled` field is still `true`. Also avoid changing a definition's `id` once items using it are in a profile: the ID is the stable identity used to derive the in-game item template.
 
-**SPT reports an invalid profile after I removed or changed an item**
-This usually means a removed Moar Supplies item is still referenced in the player's inventory or stash. Read and follow the server error message: it tells you which profile-cleanup setting to enable. Set either `removeModItemFromProfile` or `removeTraderFromProfile`, as instructed, then restart the server so SPT can remove the leftover item reference. Back up the profile before doing this.
+**SPT reports an invalid profile after I removed, disabled, or renamed an item**
+This means a Moar Supplies item is still referenced in the player's PMC or scav inventory/stash, but its template is no longer registered. Do not continue using the profile. Back it up, then set `removeModItemsFromProfile` to `true` in `SPT_Data/configs/core.json` and restart the server so SPT can remove the missing item copies. The editor now highlights this risk before an existing definition is renamed, disabled, or deleted. Keeping the definition ID unchanged preserves its stable item-template ID for normal edits.
 
 ## Post-1.0 experimental roadmap
 
