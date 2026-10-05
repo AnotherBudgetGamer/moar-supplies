@@ -39,7 +39,7 @@ This test confirms that the multi-stimulant registration path works for more tha
 2. Confirm the startup log reports custom supply entries added to static world-loot pools.
 3. Run raids on at least two maps and search containers that can normally spawn the selected vanilla bases (medical containers for medical supplies, provisions containers for food and drinks).
 4. Confirm a registered custom supply can be found in an appropriate container, is usable, and extracts successfully. **Confirmed for 0.8.5:** newly created custom croutons and pineapple juice were found in raid containers.
-5. Search loose-loot spawn points for a registered custom supply, confirm it is usable, and extract successfully. **Pending:** this must be completed in a longer raid before promotion to `main` and the Forge upload.
+5. Search loose-loot spawn points for a registered custom supply, confirm it is usable, and extract successfully. **Confirmed for 0.8.5:** multiple custom food, drinks, medical supplies, and stims were found in static containers, loose-loot spawns, and player/scav inventories during one raid.
 6. Disable a definition, restart the server, and confirm its generated item no longer appears in newly generated container loot.
 7. Set one enabled definition's `worldLootWeight` to `0`, restart, and confirm it no longer appears in static container loot.
 8. Set one enabled definition's `worldLootWeight` to `5`, restart, and confirm it is substantially more common than an equal-weight custom clone of the same base item over repeated container checks.

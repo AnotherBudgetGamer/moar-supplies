@@ -162,7 +162,7 @@ Every enabled supply is added automatically to both the static-container and dyn
 
 `worldLootWeight` controls a custom item's share of its base item's original world-loot chance. The vanilla item has a weight of `1`; a custom item with the default weight of `1` is equally likely, `0.5` is half as likely, and `5` is five times as likely. All shares are normalized to preserve the pool's total weight, so custom variants are discoverable without increasing the overall density of that kind of loot. Airdrops are unchanged.
 
-**0.8.5 test status:** Static-container spawning is confirmed in raid with newly created custom croutons and pineapple juice. Dynamic loose-loot injection is implemented but remains pending in-raid verification; it will be tested in a longer raid before the 1.0 release candidate is promoted to `main` and submitted to Forge.
+**0.8.5 test status:** World-loot spawning is confirmed in raid. Multiple newly created custom food, drinks, medical supplies, and stims were found in static containers, loose-loot spawns, and player/scav inventories during one raid. This validates the complete world-loot integration before the release candidate is promoted to `main` and submitted to Forge.
 
 ### Hideout crafting
 

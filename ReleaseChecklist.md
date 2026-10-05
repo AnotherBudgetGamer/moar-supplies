@@ -73,7 +73,7 @@ Use this checklist for every Forge release.  Items marked **release blocker** ar
 | Version alignment | Ready | Project and runtime metadata both declare `0.8.5`; the `~4.1.2` range covers SPT 4.1.x and testing is on 4.1.2. |
 | Install/config/restart docs | Ready | README covers install, config format, supported values, restart behavior, and troubleshooting. |
 | Static-container world loot | Confirmed | Newly created custom croutons and pineapple juice were found in raid containers during 0.8.5 testing. |
-| Dynamic loose loot | Pending in-raid confirmation | Injection is implemented and registered, but loose-loot spawning must be confirmed in a longer raid before promotion to `main` and the Forge upload. |
+| World loot | Confirmed | Multiple newly created custom food, drinks, medical supplies, and stims were found in static containers, loose-loot spawns, and player/scav inventories during one 0.8.5 raid. |
 | Regression plan | Needs expansion | `Milestone8_TestPlan.md` covers stims, persistence, and trader refresh. Add drinks, food, medical packs, surgery kits, and crafting before the final clean-package run. |
 | Public source URL | Ready | Runtime metadata points to `https://github.com/AnotherBudgetGamer/moar-supplies`. |
 | Forge metadata format | Ready | Runtime metadata uses the Forge-safe alphanumeric values `MoarSupplies` and `AnotherBudgetGamer`. |
