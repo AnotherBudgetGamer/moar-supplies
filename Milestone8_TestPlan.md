@@ -33,10 +33,20 @@ This test confirms that the multi-stimulant registration path works for more tha
 7. Inspect all five items and verify their name, short name, description, and inherited model.
 8. Confirm `Argus` uses the Adrenaline model and `Ravana` uses the PNB model.
 
+## Flea-market test
+
+1. In the workshop, enable flea registration for one enabled item and leave its price multiplier at `1`.
+2. Restart SPT and confirm the item appears in the flea market at its configured trader price (subject to normal flea price variation).
+3. Set the multiplier to `1.2`, restart SPT, and confirm the initial flea price database entry is 20% above the configured trader price, rounded up.
+4. Disable flea registration, restart SPT, and confirm the item has no Moar Supplies generated-flea price entry. Its enabled trader offer may still appear in flea search, as SPT exposes trader offers there independently.
+5. Confirm flea registration without either an enabled trader offer or a positive flea base price is rejected.
+6. Disable trader availability, enable flea registration, set a positive flea base price, and confirm the item is listed in the handbook under its vanilla base category and available only as generated flea offers rather than a trader offer.
+7. With a blacklist mod installed, blacklist the displayed Supply database template ID and confirm its flea filter still excludes the item. Moar Supplies must not re-add the item after the blacklist applies.
+
 ## World-loot test
 
 1. Start the SPT server with the shipped enabled definitions and set `debug` to `true` in `config/settings.json`.
-2. Confirm the startup log reports custom supply entries added to static world-loot pools.
+2. Confirm the startup log reports custom supply entries added to loot pools.
 3. Run raids on at least two maps and search containers that can normally spawn the selected vanilla bases (medical containers for medical supplies, provisions containers for food and drinks).
 4. Confirm a registered custom supply can be found in an appropriate container, is usable, and extracts successfully. **Confirmed for 0.8.5:** newly created custom croutons and pineapple juice were found in raid containers.
 5. Search loose-loot spawn points for a registered custom supply, confirm it is usable, and extract successfully. **Confirmed for 0.8.5:** multiple custom food, drinks, medical supplies, and stims were found in static containers, loose-loot spawns, and player/scav inventories during one raid.

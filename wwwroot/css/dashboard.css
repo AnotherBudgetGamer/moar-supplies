@@ -1474,6 +1474,42 @@
 .moar-editor-preview__status {
   min-height: 0;
 }
+.moar-radio-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px 14px;
+  min-width: 0;
+}
+.moar-radio-field > .moar-status-field__label,
+.moar-radio-field > .moar-field-description {
+  flex-basis: 100%;
+}
+.moar-radio-field label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #d4d4d8;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.moar-radio-field input {
+  width: auto;
+  min-height: auto;
+  padding: 0;
+  accent-color: #facc15;
+}
+.moar-form-grid output {
+  display: block;
+  min-height: 37px;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  border: 1px solid rgba(82, 88, 97, 0.78);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.16);
+  color: #fde047;
+  font-size: 0.8rem;
+}
 .moar-profile-safety {
   padding: 16px 18px;
   border: 1px solid rgba(251, 146, 60, 0.48);

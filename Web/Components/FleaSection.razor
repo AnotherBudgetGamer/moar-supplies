@@ -1,0 +1,44 @@
+<section class="moar-editor__section">
+    <div class="moar-editor__section-heading">
+        <p class="moar-kicker">FLEA MARKET</p>
+        <h2>Set generated flea availability</h2>
+        <p>This controls generated flea offers and their starting price. Use the trader price by default, or set a flea base price to create a flea-only item. SPT also shows enabled trader offers in flea search, even when generated flea registration is disabled.</p>
+    </div>
+    <div class="moar-form-grid">
+        <div class="moar-radio-field" role="radiogroup" aria-label="Flea market registration">
+            <span class="moar-status-field__label">Register generated flea offers for this @ItemLabel</span>
+            <label><input type="radio" name="@RadioGroupName" checked="@Flea.Enabled" @onchange="() => Flea.Enabled = true" /> Yes</label>
+            <label><input type="radio" name="@RadioGroupName" checked="@(!Flea.Enabled)" @onchange="() => Flea.Enabled = false" /> No</label>
+        </div>
+        @if (Flea.Enabled)
+        {
+            @if (TraderEnabled)
+            {
+                <div class="moar-radio-field" role="radiogroup" aria-label="Flea price basis">
+                    <span class="moar-status-field__label">Flea price basis</span>
+                    <label><input type="radio" name="@($"{RadioGroupName}-price-basis")" checked="@(Flea.BasePrice is null)" @onchange="() => Flea.BasePrice = null" /> Trader price</label>
+                    <label><input type="radio" name="@($"{RadioGroupName}-price-basis")" checked="@(Flea.BasePrice is not null)" @onchange="UseCustomBasePrice" /> Custom flea price</label>
+                </div>
+            }
+            @if (!TraderEnabled || Flea.BasePrice is not null)
+            {
+                <label>Flea base price <span>@(TraderEnabled ? "Overrides the trader price" : "Required for flea-only availability")</span><input type="number" min="1" @bind="Flea.BasePrice" /></label>
+            }
+            <label>Price multiplier <span>1 = base price; 1.2 = 20% more</span><input type="number" min="0.01" step="0.01" @bind="Flea.PriceMultiplier" /></label>
+            <label>Starting flea price <span>Base price × multiplier</span><output>@StartingPrice.ToString("N0") roubles</output></label>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public FleaDefinition Flea { get; set; } = default!;
+    [Parameter] public TraderDefinition? Trader { get; set; }
+    [Parameter] public string ItemLabel { get; set; } = "item";
+    [Parameter] public string RadioGroupName { get; set; } = "flea-registration";
+
+    private bool TraderEnabled => Trader?.Enabled == true;
+    private int? PriceBasis => Flea.BasePrice ?? (TraderEnabled ? Trader!.Price : null);
+    private double StartingPrice => PriceBasis is int price ? Math.Ceiling(price * Flea.PriceMultiplier) : 0;
+
+    private void UseCustomBasePrice() => Flea.BasePrice ??= Trader?.Price > 0 ? Trader.Price : 1;
+}

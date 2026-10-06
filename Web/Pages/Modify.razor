@@ -49,6 +49,7 @@
                 {
                     <div class="moar-modify__layout">
                         <form class="moar-editor" @onsubmit:preventDefault>
+                            <ProfileSafetyNotice IsCreating="IsCreating" OriginalId="StimId" CurrentId="Draft.Id" IsEnabled="Draft.Enabled" />
                             <section class="moar-editor__section">
                                 <div class="moar-editor__section-heading"><p class="moar-kicker">BASE STIM</p><h2>Start with a familiar stim</h2><p>Choose the item to build from, then set how many uses the new stim has.</p></div>
                                 <div class="moar-form-grid">
@@ -56,8 +57,6 @@
                                     <label>Uses<select @bind="Draft.Uses">@foreach (int uses in Enumerable.Range(1, 5)) { <option value="@uses">@uses use@(uses == 1 ? string.Empty : "s")</option> }</select></label>
                                 </div>
                             </section>
-
-                            <ProfileSafetyNotice IsCreating="IsCreating" OriginalId="StimId" CurrentId="Draft.Id" IsEnabled="Draft.Enabled" />
 
                             <section class="moar-editor__section">
                                 <div class="moar-editor__section-heading"><p class="moar-kicker">IDENTITY</p><h2>What players see</h2></div>
@@ -107,7 +106,7 @@
                             <TagsSection Tags="Draft.Tags" TagsChanged="tags => Draft.Tags = tags" />
                             <div class="moar-editor__bottom-row">
                                 <section class="moar-editor__section">
-                                    <div class="moar-editor__section-heading"><p class="moar-kicker">AVAILABILITY</p><h2>Set trader availability</h2><p>Configure a trader offer to make this item purchasable, or use the optional crafting section below.</p></div>
+                                    <div class="moar-editor__section-heading"><p class="moar-kicker">AVAILABILITY</p><h2>Set trader availability</h2><p>Configure a trader offer to make this item purchasable, or use the optional crafting section below. SPT also shows enabled trader offers in flea search; the flea section controls only generated flea offers.</p></div>
                                     <div class="moar-form-grid">
                                         <label class="moar-status-field"><span class="moar-status-field__label">@(Draft.Trader!.Enabled ? "Enabled" : "Disabled")</span><span class="moar-status-toggle"><input type="checkbox" @bind="Draft.Trader!.Enabled" /><span class="moar-status-toggle__control" aria-hidden="true"></span><span class="moar-status-toggle__description">Make this stim purchasable</span></span></label>
                                         @if (Draft.Trader!.Enabled)
@@ -118,8 +117,9 @@
                                         }
                                     </div>
                                 </section>
-                                <WorldLootSection Weight="Draft.WorldLootWeight" WeightChanged="weight => Draft.WorldLootWeight = weight" />
+                                <FleaSection Flea="Draft.Flea" Trader="Draft.Trader" ItemLabel="stim" RadioGroupName="stim-flea-registration" />
                                 <CraftingSection Craft="Draft.Craft" CraftChanged="craft => Draft.Craft = craft" ItemLabel="stim" />
+                                <WorldLootSection Weight="Draft.WorldLootWeight" WeightChanged="weight => Draft.WorldLootWeight = weight" />
                             </div>
                         </form>
                         <aside class="moar-editor-preview" aria-label="Definition preview">
@@ -457,6 +457,7 @@
         Identity = new StimIdentity { Name = source.Identity.Name, ShortName = source.Identity.ShortName, Description = source.Identity.Description },
         Buffs = source.Buffs.Select(buff => new BuffDefinition { Effect = buff.Effect, Value = buff.Value, Duration = buff.Duration, Delay = buff.Delay }).ToList(),
         Trader = source.Trader is null ? new TraderDefinition() : new TraderDefinition { Enabled = source.Trader.Enabled, Trader = source.Trader.Trader, TraderId = source.Trader.TraderId, LoyaltyLevel = source.Trader.LoyaltyLevel, Price = source.Trader.Price },
+        Flea = new FleaDefinition { Enabled = source.Flea.Enabled, BasePrice = source.Flea.BasePrice, PriceMultiplier = source.Flea.PriceMultiplier },
         Craft = source.Craft
     };
 }

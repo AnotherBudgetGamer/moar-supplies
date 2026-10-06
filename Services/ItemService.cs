@@ -56,7 +56,9 @@ public sealed class ItemService
             return false;
         }
 
-        bool addToHandbook = stim.Trader?.Enabled == true;
+        bool addToHandbook = stim.Trader?.Enabled == true || stim.Flea.Enabled;
+        (bool addToFleaPriceDb, int? fleaPriceRoubles) = GetFleaRegistration(stim.Trader, stim.Flea);
+        int? handbookPriceRoubles = addToHandbook ? fleaPriceRoubles ?? stim.Trader?.Price : null;
         HandbookItem? sourceHandbookItem = null;
         if (addToHandbook)
         {
@@ -78,9 +80,10 @@ public sealed class ItemService
             NewId = ids.ItemTemplateId,
             NewItemName = stim.Identity.Name,
             AddToHandbook = addToHandbook,
-            AddToFleaPriceDb = false,
+            AddToFleaPriceDb = addToFleaPriceDb,
             HandbookParentId = sourceHandbookItem?.ParentId.ToString() ?? string.Empty,
-            HandbookPriceRoubles = addToHandbook ? stim.Trader!.Price : null,
+            HandbookPriceRoubles = handbookPriceRoubles,
+            FleaPriceRoubles = fleaPriceRoubles,
             Locales = new Dictionary<string, LocaleDetails>(StringComparer.OrdinalIgnoreCase)
             {
                 ["en"] = new LocaleDetails
@@ -159,7 +162,9 @@ public sealed class ItemService
             return false;
         }
 
-        bool addToHandbook = drink.Trader?.Enabled == true;
+        bool addToHandbook = drink.Trader?.Enabled == true || drink.Flea.Enabled;
+        (bool addToFleaPriceDb, int? fleaPriceRoubles) = GetFleaRegistration(drink.Trader, drink.Flea);
+        int? handbookPriceRoubles = addToHandbook ? fleaPriceRoubles ?? drink.Trader?.Price : null;
         HandbookItem? sourceHandbookItem = addToHandbook
             ? _templateTable.Handbook.Items.FirstOrDefault(item => item.Id == baseItem.TemplateId)
             : null;
@@ -186,9 +191,10 @@ public sealed class ItemService
             NewId = ids.ItemTemplateId,
             NewItemName = drink.Identity.Name,
             AddToHandbook = addToHandbook,
-            AddToFleaPriceDb = false,
+            AddToFleaPriceDb = addToFleaPriceDb,
             HandbookParentId = sourceHandbookItem?.ParentId.ToString() ?? string.Empty,
-            HandbookPriceRoubles = addToHandbook ? drink.Trader!.Price : null,
+            HandbookPriceRoubles = handbookPriceRoubles,
+            FleaPriceRoubles = fleaPriceRoubles,
             Locales = new Dictionary<string, LocaleDetails>(StringComparer.OrdinalIgnoreCase)
             {
                 ["en"] = new LocaleDetails { Name = drink.Identity.Name, ShortName = drink.Identity.ShortName, Description = drink.Identity.Description }
@@ -233,7 +239,9 @@ public sealed class ItemService
             return false;
         }
 
-        bool addToHandbook = food.Trader?.Enabled == true;
+        bool addToHandbook = food.Trader?.Enabled == true || food.Flea.Enabled;
+        (bool addToFleaPriceDb, int? fleaPriceRoubles) = GetFleaRegistration(food.Trader, food.Flea);
+        int? handbookPriceRoubles = addToHandbook ? fleaPriceRoubles ?? food.Trader?.Price : null;
         HandbookItem? sourceHandbookItem = addToHandbook ? _templateTable.Handbook.Items.FirstOrDefault(item => item.Id == baseItem.TemplateId) : null;
         if (addToHandbook && sourceHandbookItem is null)
         {
@@ -248,8 +256,9 @@ public sealed class ItemService
         NewItemFromCloneDetails cloneDetails = new()
         {
             ItemTplToClone = baseItem.TemplateId, ParentId = sourceItem.Parent, NewId = ids.ItemTemplateId, NewItemName = food.Identity.Name,
-            AddToHandbook = addToHandbook, AddToFleaPriceDb = false, HandbookParentId = sourceHandbookItem?.ParentId.ToString() ?? string.Empty,
-            HandbookPriceRoubles = addToHandbook ? food.Trader!.Price : null,
+            AddToHandbook = addToHandbook, AddToFleaPriceDb = addToFleaPriceDb, HandbookParentId = sourceHandbookItem?.ParentId.ToString() ?? string.Empty,
+            HandbookPriceRoubles = handbookPriceRoubles,
+            FleaPriceRoubles = fleaPriceRoubles,
             Locales = new Dictionary<string, LocaleDetails>(StringComparer.OrdinalIgnoreCase) { ["en"] = new LocaleDetails { Name = food.Identity.Name, ShortName = food.Identity.ShortName, Description = food.Identity.Description } },
             OverrideProperties = new TemplateItemProperties { MaxResource = food.Resource, EffectsHealth = nutrition }
         };
@@ -281,7 +290,9 @@ public sealed class ItemService
             return false;
         }
 
-        bool addToHandbook = medicalPack.Trader?.Enabled == true;
+        bool addToHandbook = medicalPack.Trader?.Enabled == true || medicalPack.Flea.Enabled;
+        (bool addToFleaPriceDb, int? fleaPriceRoubles) = GetFleaRegistration(medicalPack.Trader, medicalPack.Flea);
+        int? handbookPriceRoubles = addToHandbook ? fleaPriceRoubles ?? medicalPack.Trader?.Price : null;
         HandbookItem? sourceHandbookItem = addToHandbook
             ? _templateTable.Handbook.Items.FirstOrDefault(item => item.Id == baseItem.TemplateId)
             : null;
@@ -364,9 +375,10 @@ public sealed class ItemService
             NewId = ids.ItemTemplateId,
             NewItemName = medicalPack.Identity.Name,
             AddToHandbook = addToHandbook,
-            AddToFleaPriceDb = false,
+            AddToFleaPriceDb = addToFleaPriceDb,
             HandbookParentId = sourceHandbookItem?.ParentId.ToString() ?? string.Empty,
-            HandbookPriceRoubles = addToHandbook ? medicalPack.Trader!.Price : null,
+            HandbookPriceRoubles = handbookPriceRoubles,
+            FleaPriceRoubles = fleaPriceRoubles,
             Locales = new Dictionary<string, LocaleDetails>(StringComparer.OrdinalIgnoreCase)
             {
                 ["en"] = new LocaleDetails { Name = medicalPack.Identity.Name, ShortName = medicalPack.Identity.ShortName, Description = medicalPack.Identity.Description }
@@ -395,6 +407,22 @@ public sealed class ItemService
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Converts the friendly flea configuration into the two values expected by
+    /// SPT's custom-item API. A flea-only item supplies its own base price;
+    /// otherwise, an enabled trader price is used as the familiar default.
+    /// </summary>
+    private static (bool AddToFleaPriceDb, int? FleaPriceRoubles) GetFleaRegistration(TraderDefinition? trader, FleaDefinition flea)
+    {
+        int? basePrice = flea.BasePrice ?? (trader?.Enabled == true ? trader.Price : null);
+        if (flea.Enabled && basePrice is int price)
+        {
+            return (true, checked((int)Math.Ceiling(price * flea.PriceMultiplier)));
+        }
+
+        return (false, null);
     }
 
     /// <summary>

@@ -289,7 +289,7 @@ public sealed class ConfigLoader : IOnLoad
                 registeredMedicalPackCraftCount);
         }
         int worldLootEntryCount = _worldLootService.Register(worldLootInjections);
-        _logger.LogInformation("[MoarSupplies] Added {WorldLootEntryCount} custom supply entry(s) to static world-loot pools.", worldLootEntryCount);
+        _logger.LogInformation("[MoarSupplies] Added {WorldLootEntryCount} custom supply entry(s) to loot pools.", worldLootEntryCount);
         _mappedItemTestCloneService.CreateMissingMappedItemClones(config);
     }
 

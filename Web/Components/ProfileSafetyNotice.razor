@@ -2,16 +2,8 @@
 {
     <section class="moar-profile-safety" role="note" aria-label="Profile safety">
         <p class="moar-kicker">PROFILE SAFETY</p>
-        @if (WillOrphanProfileItems)
-        {
-            <strong>This save can orphan copies already in a PMC or scav inventory.</strong>
-            <p>Changing the definition ID or disabling this definition removes its current item template when SPT restarts. Remove or consume every copy first, or back up the profile before restarting.</p>
-        }
-        else
-        {
-            <strong>Keep this definition ID unchanged while copies exist in a profile.</strong>
-            <p>Normal edits retain this item's stable template ID. Do not rename, disable, or delete the definition while any copy is in a PMC or scav inventory or stash.</p>
-        }
+        <strong>Changing or editing this definition with a copy in any PMC or scav inventory or stash will trigger an error.</strong>
+        <p>Remove or consume all copies, or back up your profile before saving changes and restarting the SPT server.</p>
         <p class="moar-profile-safety__recovery">If SPT reports a missing Moar Supplies item, stop using that profile and set <code>removeModItemsFromProfile</code> to <code>true</code> in <code>SPT_Data/configs/core.json</code>, then restart the server. This removes the missing copies.</p>
     </section>
 }
@@ -22,6 +14,4 @@
     [Parameter, EditorRequired] public string? CurrentId { get; set; }
     [Parameter, EditorRequired] public bool IsEnabled { get; set; }
 
-    private bool WillOrphanProfileItems =>
-        !IsEnabled || !string.Equals(OriginalId, CurrentId, StringComparison.OrdinalIgnoreCase);
 }

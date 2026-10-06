@@ -4,7 +4,7 @@
 
 It includes a built-in web workshop for everyday editing and a clear JSON format for anyone who prefers to work directly with files. Define an item's identity, base item, uses, effects, timing, price, and trader; Moar Supplies turns that friendly definition into a persistent in-game supply.
 
-> **Version:** 0.8.5<br>
+> **Version:** 0.9.0<br>
 > **SPT compatibility:** 4.1.x (tested with 4.1.2; `~4.1.2`)<br>
 > **License:** All Rights Reserved
 
@@ -134,6 +134,10 @@ Each file in `config/stims/` contains one item definition. This is the full shap
     "trader": "therapist",
     "loyaltyLevel": 2,
     "price": 35000
+  },
+  "flea": {
+    "enabled": true,
+    "priceMultiplier": 1.2
   }
 }
 ```
@@ -150,8 +154,11 @@ Each file in `config/stims/` contains one item definition. This is the full shap
 | `worldLootWeight` | Optional relative world-loot weight. The default is `1`, equal to the selected vanilla base item. Raise it to make the custom item more common, lower it to make it rarer, or set it to `0` to exclude it from world loot. |
 | `tags` | Optional workshop labels; up to eight, each 32 characters or fewer. They do not change gameplay. |
 | `buffs` | An array of effects. Each effect has a duration in seconds (maximum 1,800 seconds / 30 minutes) and may have a delayed start. |
-| `trader` | Optional trader availability. Set `enabled` to `false` to keep the item out of trader inventories. `Fence` stock is refreshed by SPT and should not be treated as a guaranteed inventory listing. |
+| `trader` | Optional trader availability. Set `enabled` to `false` to keep the item out of trader inventories. SPT also exposes enabled trader offers in flea-market search, independently of this definition's generated-flea setting. `Fence` stock is refreshed by SPT and should not be treated as a guaranteed inventory listing. |
 | `trader.traderId` | Optional stable SPT trader ID. The workshop writes this automatically for every selection; it lets Moar Supplies target a modded trader reliably while retaining its friendly name. |
+| `flea` | Optional generated flea-market availability. It uses an enabled trader's price by default, or `flea.basePrice` for a flea-only item; it does not hide a trader's own offer from flea search. |
+| `flea.basePrice` | Optional flea price before applying the multiplier. When omitted, an enabled trader's price is used. Required for a flea-only item with trader availability disabled. |
+| `flea.priceMultiplier` | Multiplies the flea price basis to set the initial flea price. Defaults to `1`, meaning it matches the trader or flea base price; `1.2` sets it 20% higher. |
 | `craft` | Optional hideout recipe. When enabled, the item is produced at the selected bench with the configured ingredients. |
 
 Definitions are loaded as a complete set. If any definition is invalid, Moar Supplies reports the errors and registers no items, preventing a partly updated setup.
@@ -182,6 +189,23 @@ Add a `craft` block to any stim, drink, food, or medical-pack definition to make
 ```
 
 Recipe IDs are generated deterministically from the definition ID. A recipe needs at least one ingredient, valid 24-character SPT template IDs, positive counts, a bench level from 1 through 3, and positive duration/output values. The workshop lets you enable crafting, configure the bench, level, timer, output count, and fuel requirement, then search the live SPT item catalog to add, edit, or remove ingredients.
+
+### Flea market
+
+The workshop places flea controls between trader availability and hideout crafting. Choose **Yes** to register generated flea offers for the item in SPT's flea price database, then set a positive `priceMultiplier`. The generated-offer price is rounded up from `flea.basePrice * flea.priceMultiplier`; when `basePrice` is omitted, the enabled trader's price is used instead. The default multiplier is `1`; `1.2` produces a generated flea price 20% above its price basis.
+
+Flea registration is off by default. A flea-only item is supported: disable trader availability, enable flea registration, and provide a positive `flea.basePrice`. Flea-enabled items are also added to the handbook under their vanilla base item's category, using the calculated flea price. **SPT automatically includes enabled trader inventory in flea-market search**, so disabling generated flea registration stops generated flea offers but does not hide a trader's own offer from that search.
+
+```json
+"trader": { "enabled": false },
+"flea": {
+  "enabled": true,
+  "basePrice": 35000,
+  "priceMultiplier": 1.2
+}
+```
+
+Moar Supplies only adds the item and its initial price to SPT's normal flea price database. It does not bypass or rewrite another mod's blacklist, flea registration, or economy settings. Blacklist mods that filter the normal flea pool—such as [The Blacklist](https://forge.sp-tarkov.com/mod/755/the-blacklist-flea-market-enhancements)—remain authoritative: leave Moar Supplies flea registration off for an item you do not want listed, or copy its stable template ID from the Supply database into that mod's blacklist when it offers per-item rules. Likewise, an economy mod that assigns a price to the same template ID can override Moar Supplies' initial price. If a flea/economy mod replaces the entire pool instead of filtering it, configure that mod to include the generated item ID.
 
 ### Supported base items
 
@@ -276,7 +300,7 @@ Version 1.0 focuses on a stable, user-editable catalog of vanilla-base supplies:
 
 After 1.0, the first experimental track is **cross-item timed effects**. This would test attaching Moar Supplies buffs and debuffs to item classes that do not normally use them—for example, a bandage that applies a short health-regeneration effect after treating bleeding. It is intentionally deferred because each medical item type must be validated in raid for client behavior, resource consumption, animations, effects timing, and profile safety before it can be considered stable.
 
-The 1.0+ workshop roadmap also includes **guaranteed Fence listings**, so a definition assigned to Fence can remain in his active inventory at its configured price across stock refreshes. It also includes a **stim-definition backup/export** option, so users can easily copy their custom stim definitions somewhere safe before making changes. A companion **delete all shipped stims** control will let users remove the full set of default Moar Supplies stimulants at once when they prefer not to use them.
+The 1.0+ workshop roadmap also includes **guaranteed Fence listings**, so a definition assigned to Fence can remain in his active inventory at its configured price across stock refreshes; an opt-in **ragfair filtering patch** that can hide trader offers from flea search; and a **stim-definition backup/export** option, so users can easily copy their custom stim definitions somewhere safe before making changes. A companion **delete all shipped stims** control will let users remove the full set of default Moar Supplies stimulants at once when they prefer not to use them.
 
 Experimental effects will remain opt-in and clearly labeled until they have been tested across the supported item families.
 
@@ -315,7 +339,7 @@ The project expects the SPT runtime assemblies from a local SPT 4.1.2 installati
 dotnet build -c Release
 ```
 
-This creates `ReleaseZip/AnotherBudgetGamer-MoarSupplies-0.8.5.zip`, ready to extract into an SPT installation.
+This creates `ReleaseZip/AnotherBudgetGamer-MoarSupplies-0.9.0.zip`, ready to extract into an SPT installation.
 
 To use a different runtime location:
 
