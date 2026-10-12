@@ -4,7 +4,7 @@ Use this checklist for every Forge release.  Items marked **release blocker** ar
 
 ## 1. Version and metadata
 
-- [x] **Release blocker:** Choose the release version using semantic versioning (`0.9.0`).
+- [x] **Release blocker:** Choose the release version using semantic versioning (`1.0.0`).
 - [x] **Release blocker:** Set that exact version in both `MoarSupplies.csproj` (`<Version>`) and `Mod.cs` (`Version`).
 - [x] **Release blocker:** Confirm `ModGuid` is exactly `com.anotherbudgetgamer.moarsupplies`; enter that same GUID for the Forge submission.
 - [x] **Release blocker:** Set SptVersion to ~4.1.2, covering SPT versions >= 4.1.2 and < 4.2.0 (the tested 4.1.x line).
@@ -19,7 +19,7 @@ Use this checklist for every Forge release.  Items marked **release blocker** ar
 - [ ] Start from the intended commit and verify `git status`; do not accidentally ship unrelated local changes.
 - [x] Run `dotnet build -c Release` against the intended SPT runtime.
 - [x] **Release blocker:** Confirm the build has zero errors and warnings.
-- [ ] **Release blocker:** Inspect `ReleaseZip/AnotherBudgetGamer-MoarSupplies-0.9.0.zip` from the committed release candidate.
+- [ ] **Release blocker:** Inspect `ReleaseZip/AnotherBudgetGamer-MoarSupplies-1.0.0.zip` from the committed release candidate.
 - [x] **Release blocker:** Confirm the archive root is exactly:
 
   ```text
@@ -44,7 +44,7 @@ Use this checklist for every Forge release.  Items marked **release blocker** ar
 ## 4. User-facing documentation and Forge page
 
 - [ ] **Release blocker:** Publish the exact source used for the binary at the repository URL; tag the release commit.
-- [ ] **Release blocker:** Add a version-specific changelog with user-visible changes, fixes, known issues, and any upgrade action.
+- [x] **Release blocker:** Add a version-specific changelog with user-visible changes, known behavior, and upgrade action (`CHANGELOG.md`).
 - [ ] **Release blocker:** Give Forge a concise description that states: configurable custom stimulants, supported traders, bundled web workshop, and tested SPT version.
 - [ ] **Release blocker:** Include install steps using 7-Zip: close SPT, extract the archive to the SPT root, start the server, and open `/moar-supplies`.
 - [x] **Release blocker:** Add a prominent removal warning: custom items can remain in a profile; users should consume/remove all Moar Supplies items and back up their profile before uninstalling. Profile repair is not guaranteed.
@@ -63,14 +63,14 @@ Use this checklist for every Forge release.  Items marked **release blocker** ar
 - [ ] Make one final clean-install smoke test with the Forge download if practical.
 - [ ] Keep the release ZIP, source tag/commit, test evidence, and changelog together for support and patch releases.
 
-## Current 0.9.0 audit
+## Current 1.0.0 audit
 
 | Area | Status | Evidence / action |
 | --- | --- | --- |
-| Release build | Ready | `dotnet build -c Release` succeeds with zero warnings for the current tree. Rebuild from the committed release candidate before publishing. |
-| Archive layout | Pending 0.9.0 build | The local release ZIP uses `SPT_Runtime/user/mods/AnotherBudgetGamer-MoarSupplies/` and must be reinspected after the 0.9.0 release candidate is built. |
-| ZIP install/removal smoke test | Pending clean-package evidence | A fresh installation of the exact 0.9.0 ZIP is required before publishing. |
-| Version alignment | Ready | Project and runtime metadata both declare `0.9.0`; the `~4.1.2` range covers SPT 4.1.x and testing is on 4.1.2. |
+| Release build | Pending final build | Rebuild the committed 1.0.0 release candidate with `dotnet build -c Release`; it must complete with zero warnings. |
+| Archive layout | Pending 1.0.0 build | The local release ZIP must use `SPT_Runtime/user/mods/AnotherBudgetGamer-MoarSupplies/` and be reinspected after the 1.0.0 release candidate is built. |
+| ZIP install/removal smoke test | Pending clean-package evidence | A fresh installation of the exact 1.0.0 ZIP is required before publishing. |
+| Version alignment | Ready | Project and runtime metadata both declare `1.0.0`; the `~4.1.2` range covers SPT 4.1.x and testing is on 4.1.2. |
 | Install/config/restart docs | Ready | README covers install, config format, supported values, restart behavior, and troubleshooting. |
 | Static-container world loot | Confirmed | Newly created custom croutons and pineapple juice were found in raid containers during 0.8.5 testing. |
 | World loot | Confirmed | Multiple newly created custom food, drinks, medical supplies, and stims were found in static containers, loose-loot spawns, and player/scav inventories during one 0.8.5 raid. |

@@ -4,9 +4,11 @@
 
 It includes a built-in web workshop for everyday editing and a clear JSON format for anyone who prefers to work directly with files. Define an item's identity, base item, uses, effects, timing, price, and trader; Moar Supplies turns that friendly definition into a persistent in-game supply.
 
-> **Version:** 0.9.0<br>
+> **Version:** 1.0.0<br>
 > **SPT compatibility:** 4.1.x (tested with 4.1.2; `~4.1.2`)<br>
 > **License:** All Rights Reserved
+
+See [CHANGELOG.md](CHANGELOG.md) for the 1.0.0 release notes and upgrade guidance.
 
 ![Moar Supplies item editor](wwwroot/assets/stim-basics.png)
 
@@ -18,6 +20,7 @@ It includes a built-in web workshop for everyday editing and a clear JSON format
 - Lets you add beneficial effects, tradeoffs, durations, and delayed effects.
 - Gives each definition stable internal IDs, so items already in a profile remain valid after a normal server restart.
 - Adds configured items to supported traders with a configurable rouble price and loyalty level, and can register optional hideout crafts.
+- Supports generated flea offers, including flea-only items with their own starting price, while remaining compatible with normal flea blacklist and economy mods.
 - Adds enabled supplies to the static containers and dynamic loose-loot spawn points where their selected vanilla base item can spawn.
 - Provides a server-side web workshop to browse, create, edit, enable/disable, and delete definitions.
 - Stores definitions as one readable JSON file per item and validates the complete configuration before registering anything.
@@ -169,7 +172,7 @@ Every enabled supply is added automatically to both the static-container and dyn
 
 `worldLootWeight` controls a custom item's share of its base item's original world-loot chance. The vanilla item has a weight of `1`; a custom item with the default weight of `1` is equally likely, `0.5` is half as likely, and `5` is five times as likely. All shares are normalized to preserve the pool's total weight, so custom variants are discoverable without increasing the overall density of that kind of loot. Airdrops are unchanged.
 
-**0.8.5 test status:** World-loot spawning is confirmed in raid. Multiple newly created custom food, drinks, medical supplies, and stims were found in static containers, loose-loot spawns, and player/scav inventories during one raid. This validates the complete world-loot integration before the release candidate is promoted to `main` and submitted to Forge.
+**1.0 release status:** World-loot spawning is confirmed in raid. Multiple custom food, drinks, medical supplies, and stims were found in static containers, loose-loot spawns, and player/scav inventories. The 1.0 release includes the complete world-loot integration alongside trader, flea-market, and hideout-crafting support.
 
 ### Hideout crafting
 
@@ -294,13 +297,13 @@ Check whether its `enabled` field is still `true`. Also avoid changing a definit
 **SPT reports an invalid profile after I removed, disabled, or renamed an item**
 This means a Moar Supplies item is still referenced in the player's PMC or scav inventory/stash, but its template is no longer registered. Do not continue using the profile. Back it up, then set `removeModItemsFromProfile` to `true` in `SPT_Data/configs/core.json` and restart the server so SPT can remove the missing item copies. The editor now highlights this risk before an existing definition is renamed, disabled, or deleted. Keeping the definition ID unchanged preserves its stable item-template ID for normal edits.
 
-## Post-1.0 experimental roadmap
+## Future experimental roadmap
 
-Version 1.0 focuses on a stable, user-editable catalog of vanilla-base supplies: medical kits, surgery kits, bleeding treatments, splints, balms, consumables, drinks, and stimulants. The supported editing controls preserve the selected vanilla item's native use behavior.
+Version 1.0 delivers a stable, user-editable catalog of vanilla-base supplies: medical kits, surgery kits, bleeding treatments, splints, balms, consumables, drinks, and stimulants. The supported editing controls preserve the selected vanilla item's native use behavior.
 
-After 1.0, the first experimental track is **cross-item timed effects**. This would test attaching Moar Supplies buffs and debuffs to item classes that do not normally use them—for example, a bandage that applies a short health-regeneration effect after treating bleeding. It is intentionally deferred because each medical item type must be validated in raid for client behavior, resource consumption, animations, effects timing, and profile safety before it can be considered stable.
+The first experimental track is **cross-item timed effects**. This would test attaching Moar Supplies buffs and debuffs to item classes that do not normally use them—for example, a bandage that applies a short health-regeneration effect after treating bleeding. It is intentionally deferred because each medical item type must be validated in raid for client behavior, resource consumption, animations, effects timing, and profile safety before it can be considered stable.
 
-The 1.0+ workshop roadmap also includes **guaranteed Fence listings**, so a definition assigned to Fence can remain in his active inventory at its configured price across stock refreshes; an opt-in **ragfair filtering patch** that can hide trader offers from flea search; and a **stim-definition backup/export** option, so users can easily copy their custom stim definitions somewhere safe before making changes. A companion **delete all shipped stims** control will let users remove the full set of default Moar Supplies stimulants at once when they prefer not to use them.
+The future workshop roadmap also includes **guaranteed Fence listings**, so a definition assigned to Fence can remain in his active inventory at its configured price across stock refreshes; an opt-in **ragfair filtering patch** that can hide trader offers from flea search; and a **stim-definition backup/export** option, so users can easily copy their custom stim definitions somewhere safe before making changes. A companion **delete all shipped stims** control will let users remove the full set of default Moar Supplies stimulants at once when they prefer not to use them.
 
 Experimental effects will remain opt-in and clearly labeled until they have been tested across the supported item families.
 
@@ -339,7 +342,7 @@ The project expects the SPT runtime assemblies from a local SPT 4.1.2 installati
 dotnet build -c Release
 ```
 
-This creates `ReleaseZip/AnotherBudgetGamer-MoarSupplies-0.9.0.zip`, ready to extract into an SPT installation.
+This creates `ReleaseZip/AnotherBudgetGamer-MoarSupplies-1.0.0.zip`, ready to extract into an SPT installation.
 
 To use a different runtime location:
 
