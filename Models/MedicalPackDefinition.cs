@@ -34,5 +34,6 @@ public sealed class MedicalPackDefinition : ICraftableDefinition
     /// <summary>Relative world-loot weight. One equals the vanilla base item's weight.</summary>
     public double WorldLootWeight { get; set; } = 1;
     public TraderDefinition? Trader { get; set; }
+    public FleaDefinition Flea { get; set; } = new();
     public CraftDefinition? Craft { get; set; }
 }

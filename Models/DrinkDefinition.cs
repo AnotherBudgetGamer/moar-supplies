@@ -17,5 +17,6 @@ public sealed class DrinkDefinition : ICraftableDefinition
     public double WorldLootWeight { get; set; } = 1;
     public List<BuffDefinition> Buffs { get; set; } = [];
     public TraderDefinition? Trader { get; set; }
+    public FleaDefinition Flea { get; set; } = new();
     public CraftDefinition? Craft { get; set; }
 }

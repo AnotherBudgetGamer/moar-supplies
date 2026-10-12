@@ -133,6 +133,7 @@ public sealed partial class ConfigValidator
         ValidateWorldLootWeight(medicalPack.WorldLootWeight, label, errors);
         ValidateTags(medicalPack.Tags, label, errors);
         ValidateTrader(medicalPack.Trader, label, errors);
+        ValidateFlea(medicalPack.Flea, medicalPack.Trader, label, errors);
         ValidateCraft(medicalPack.Craft, label, errors);
     }
 
@@ -164,6 +165,7 @@ public sealed partial class ConfigValidator
         ValidateTags(drink.Tags, label, errors);
         ValidateBuffs(drink.Buffs, label, errors, supportsDirectItemEffects: false);
         ValidateTrader(drink.Trader, label, errors);
+        ValidateFlea(drink.Flea, drink.Trader, label, errors);
         ValidateCraft(drink.Craft, label, errors);
     }
 
@@ -183,6 +185,7 @@ public sealed partial class ConfigValidator
         ValidateWorldLootWeight(food.WorldLootWeight, label, errors);
         ValidateTags(food.Tags, label, errors);
         ValidateTrader(food.Trader, label, errors);
+        ValidateFlea(food.Flea, food.Trader, label, errors);
         ValidateCraft(food.Craft, label, errors);
     }
 
@@ -248,6 +251,7 @@ public sealed partial class ConfigValidator
         ValidateTags(stim, label, errors);
         ValidateBuffs(stim, label, errors);
         ValidateTrader(stim, label, errors);
+        ValidateFlea(stim.Flea, stim.Trader, label, errors);
         ValidateCraft(stim.Craft, label, errors);
     }
 
@@ -396,6 +400,35 @@ public sealed partial class ConfigValidator
     }
 
     private void ValidateTrader(StimDefinition stim, string label, List<string> errors) => ValidateTrader(stim.Trader, label, errors);
+
+    private static void ValidateFlea(FleaDefinition? fleaDefinition, TraderDefinition? traderDefinition, string label, List<string> errors)
+    {
+        if (fleaDefinition is null)
+        {
+            errors.Add($"{label}: field 'flea' must be an object when provided.");
+            return;
+        }
+
+        if (!double.IsFinite(fleaDefinition.PriceMultiplier) || fleaDefinition.PriceMultiplier <= 0)
+        {
+            errors.Add($"{label}: field 'flea.priceMultiplier' must be a finite number greater than zero.");
+        }
+
+        if (fleaDefinition.BasePrice is int basePrice && basePrice <= 0)
+        {
+            errors.Add($"{label}: field 'flea.basePrice' must be greater than zero when provided.");
+        }
+        if (fleaDefinition.Enabled && fleaDefinition.BasePrice is null && traderDefinition?.Enabled != true)
+        {
+            errors.Add($"{label}: flea.enabled requires 'flea.basePrice' when trader.enabled is false.");
+        }
+        int? priceBasis = fleaDefinition.BasePrice ?? (traderDefinition?.Enabled == true ? traderDefinition.Price : null);
+        if (fleaDefinition.Enabled && priceBasis is int price && price > 0
+            && price * fleaDefinition.PriceMultiplier > int.MaxValue)
+        {
+            errors.Add($"{label}: flea price exceeds SPT's maximum supported rouble value.");
+        }
+    }
 
     private void ValidateTrader(TraderDefinition? traderDefinition, string label, List<string> errors)
     {
