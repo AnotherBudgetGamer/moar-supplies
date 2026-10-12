@@ -10,7 +10,7 @@ It includes a built-in web workshop for everyday editing and a clear JSON format
 
 See [CHANGELOG.md](CHANGELOG.md) for the 1.0.0 release notes and upgrade guidance.
 
-![Moar Supplies item editor](wwwroot/assets/stim-basics.png)
+![Create a stimulant in the Moar Supplies workshop](wwwroot/assets/create-stim.png)
 
 ## What it does
 
@@ -44,7 +44,7 @@ The included definitions provide a working starting set. You can leave them as-i
 
 The web interface is the recommended way to manage items and supplies. It is designed to keep SPT-specific implementation details out of the way.
 
-![Item effects screen](wwwroot/assets/stim-effects.png)
+![Effect picker organized by combat, stamina, health, skills, and tradeoffs](wwwroot/assets/stim-effects-v2.png)
 
 1. Open **Moar Supplies → Database** to inspect existing definitions.
 2. Select an item, or choose **Add Stim** in **Modify**. (The current UI label is retained for compatibility.)
@@ -55,6 +55,18 @@ The web interface is the recommended way to manage items and supplies. It is des
 7. Save the definition, then **restart the SPT server** before starting the game to apply it in-game.
 
 Saved definitions are written to their type-specific directory under `config/`, one file per item. The workshop tells you about validation errors before it writes a change.
+
+![Workshop tags field for organizing supplies](wwwroot/assets/tags.png)
+
+Tags are optional, workshop-only labels. Use comma-separated labels to organize supplies; they do not change in-game behavior.
+
+![Trader availability and generated flea-market controls](wwwroot/assets/trader-flea.png)
+
+Trader offers and generated flea offers are configured independently. SPT includes enabled trader offers in flea-market search, while the flea section controls only generated offers and their initial price.
+
+![Hideout crafting and world-loot spawn-weight controls](wwwroot/assets/crafting-loot.png)
+
+Enable hideout crafting when you want a recipe for the item, and adjust the world-loot spawn weight to control its share of the selected vanilla base item's loot chance.
 
 ![Definition database](wwwroot/assets/database.png)
 
