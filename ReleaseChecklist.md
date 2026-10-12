@@ -19,7 +19,7 @@ Use this checklist for every Forge release.  Items marked **release blocker** ar
 - [ ] Start from the intended commit and verify `git status`; do not accidentally ship unrelated local changes.
 - [x] Run `dotnet build -c Release` against the intended SPT runtime.
 - [x] **Release blocker:** Confirm the build has zero errors and warnings.
-- [ ] **Release blocker:** Inspect `ReleaseZip/AnotherBudgetGamer-MoarSupplies-1.0.0.zip` from the committed release candidate.
+- [x] **Release blocker:** Inspect `ReleaseZip/AnotherBudgetGamer-MoarSupplies-1.0.0.zip` from the committed release candidate.
 - [x] **Release blocker:** Confirm the archive root is exactly:
 
   ```text
@@ -28,7 +28,7 @@ Use this checklist for every Forge release.  Items marked **release blocker** ar
 
 - [x] **Release blocker:** Confirm it contains the compiled `MoarSupplies.dll`, `config/`, `wwwroot/`, and both static-web-assets manifest files.
 - [x] Confirm the archive contains no source, `bin/`, `obj/`, development scripts, private logs, profiles, or local runtime assemblies.
-- [ ] Optionally compute and record the archive SHA-256 for release notes and support triage.
+- [x] Record the archive SHA-256 for release notes and support triage: `548020497F14B1304EB713860CCF455614458AD01305F66E0678A5ED2926058D`.
 
 ## 3. Test exactly what users receive
 
@@ -67,13 +67,13 @@ Use this checklist for every Forge release.  Items marked **release blocker** ar
 
 | Area | Status | Evidence / action |
 | --- | --- | --- |
-| Release build | Pending final build | Rebuild the committed 1.0.0 release candidate with `dotnet build -c Release`; it must complete with zero warnings. |
-| Archive layout | Pending 1.0.0 build | The local release ZIP must use `SPT_Runtime/user/mods/AnotherBudgetGamer-MoarSupplies/` and be reinspected after the 1.0.0 release candidate is built. |
+| Release build | Ready | `dotnet build -c Release --no-restore` completed with zero warnings and errors for the 1.0.0 release commit. |
+| Archive layout | Ready | Inspected `AnotherBudgetGamer-MoarSupplies-1.0.0.zip`: the root is `SPT_Runtime/user/mods/AnotherBudgetGamer-MoarSupplies/` and it contains the DLL, configuration, web assets, and both static-web-assets manifests. |
 | ZIP install/removal smoke test | Pending clean-package evidence | A fresh installation of the exact 1.0.0 ZIP is required before publishing. |
 | Version alignment | Ready | Project and runtime metadata both declare `1.0.0`; the `~4.1.2` range covers SPT 4.1.x and testing is on 4.1.2. |
 | Install/config/restart docs | Ready | README covers install, config format, supported values, restart behavior, and troubleshooting. |
-| Static-container world loot | Confirmed | Newly created custom croutons and pineapple juice were found in raid containers during 0.8.5 testing. |
-| World loot | Confirmed | Multiple newly created custom food, drinks, medical supplies, and stims were found in static containers, loose-loot spawns, and player/scav inventories during one 0.8.5 raid. |
+| Static-container world loot | Confirmed | Newly created custom croutons and pineapple juice were found in raid containers during release testing. |
+| World loot | Confirmed | Multiple custom food, drinks, medical supplies, and stims were found in static containers, loose-loot spawns, and player/scav inventories during release testing. |
 | Regression plan | Needs expansion | `Milestone8_TestPlan.md` covers stims, persistence, and trader refresh. Add drinks, food, medical packs, surgery kits, and crafting before the final clean-package run. |
 | Public source URL | Ready | Runtime metadata points to `https://github.com/AnotherBudgetGamer/moar-supplies`. |
 | Forge metadata format | Ready | Runtime metadata uses the Forge-safe alphanumeric values `MoarSupplies` and `AnotherBudgetGamer`. |
