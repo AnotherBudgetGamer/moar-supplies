@@ -2,6 +2,7 @@
 @attribute [Authorize(Policy = "Administrator")]
 @layout BaseMudBlazorLayout
 @inject ConfigState ConfigState
+@inject ConfigStorage ConfigStorage
 @inject StimIdService StimIdService
 
 <PageTitle>Supply Database - Moar Supplies</PageTitle>
@@ -18,6 +19,10 @@
                         <h1 id="moar-database-title">Supply database</h1>
                         <p>Browse configured supplies. Open an entry to inspect its effects, resource, trader availability, and optional hideout craft.</p>
                     </div>
+                    @if (StarterStimCount > 0)
+                    {
+                        <button type="button" class="moar-delete-button" @onclick="OpenStarterStimDeleteConfirmation">Delete all starter stims</button>
+                    }
                     @if (Config is not null)
                     {
                         <span class="moar-database__count">@(Config.Stims.Count + Config.Drinks.Count + Config.Foods.Count + Config.MedicalPacks.Count) definition@(Config.Stims.Count + Config.Drinks.Count + Config.Foods.Count + Config.MedicalPacks.Count == 1 ? string.Empty : "s")</span>
@@ -154,6 +159,22 @@
                         }
                     </div>
                 }
+
+                @if (StarterStimDeleteConfirmationOpen)
+                {
+                    <div class="moar-delete-dialog-backdrop" role="presentation" @onclick="CloseStarterStimDeleteConfirmation">
+                        <section class="moar-delete-dialog" role="alertdialog" aria-modal="true" aria-labelledby="moar-delete-starters-title" aria-describedby="moar-delete-starters-description" @onclick:stopPropagation>
+                            <p class="moar-kicker">CLEAN SLATE</p>
+                            <h2 id="moar-delete-starters-title">Delete @StarterStimCount starter stim@(StarterStimCount == 1 ? string.Empty : "s")?</h2>
+                            <p id="moar-delete-starters-description">This removes only the Moar Supplies stims included with the mod. Your custom stims and other supplies stay intact. It cannot be undone. Remove or consume every copy from PMC and scav inventories first, or back up the profile before restarting SPT.</p>
+                            @if (StarterStimDeleteErrors.Count > 0)
+                            {
+                                <div class="moar-save-message moar-save-message--error" role="alert"><strong>Could not delete starter stims</strong><ul>@foreach (string error in StarterStimDeleteErrors) { <li>@error</li>}</ul></div>
+                            }
+                            <div class="moar-delete-dialog__actions"><button type="button" class="moar-button moar-button--secondary" @onclick="CloseStarterStimDeleteConfirmation" disabled="@IsDeletingStarterStims">Cancel</button><button type="button" class="moar-delete-button" @onclick="DeleteStarterStimsAsync" disabled="@IsDeletingStarterStims">@(IsDeletingStarterStims ? "Deleting…" : "Delete starter stims")</button></div>
+                        </section>
+                    </div>
+                }
             </section>
         </section>
     </main>
@@ -161,6 +182,35 @@
 
 @code {
     private ModConfig? Config => ConfigState.Current;
+    private bool StarterStimDeleteConfirmationOpen;
+    private bool IsDeletingStarterStims;
+    private List<string> StarterStimDeleteErrors = [];
+    private int StarterStimCount => Config?.Stims.Count(stim => ConfigStorage.IsStarterStimId(stim.Id)) ?? 0;
+
+    private void OpenStarterStimDeleteConfirmation()
+    {
+        StarterStimDeleteErrors = [];
+        StarterStimDeleteConfirmationOpen = true;
+    }
+
+    private void CloseStarterStimDeleteConfirmation()
+    {
+        if (IsDeletingStarterStims) return;
+        StarterStimDeleteConfirmationOpen = false;
+        StarterStimDeleteErrors = [];
+    }
+
+    private async Task DeleteStarterStimsAsync()
+    {
+        if (IsDeletingStarterStims || StarterStimCount == 0) return;
+
+        IsDeletingStarterStims = true;
+        StarterStimDeleteErrors = [];
+        ConfigBulkDeleteResult result = await ConfigStorage.DeleteStarterStimsAsync(CancellationToken.None);
+        IsDeletingStarterStims = false;
+        StarterStimDeleteErrors = result.Errors.ToList();
+        if (result.Succeeded) StarterStimDeleteConfirmationOpen = false;
+    }
 
     private static string TraderLabel(TraderDefinition? trader) => trader is { Enabled: true }
         ? $"{TraderDisplayName(trader)} · LL{trader.LoyaltyLevel} · {trader.Price:N0} ₽"

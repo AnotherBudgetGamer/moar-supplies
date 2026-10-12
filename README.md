@@ -303,7 +303,9 @@ Version 1.0 delivers a stable, user-editable catalog of vanilla-base supplies: m
 
 The first experimental track is **cross-item timed effects**. This would test attaching Moar Supplies buffs and debuffs to item classes that do not normally use them—for example, a bandage that applies a short health-regeneration effect after treating bleeding. It is intentionally deferred because each medical item type must be validated in raid for client behavior, resource consumption, animations, effects timing, and profile safety before it can be considered stable.
 
-The future workshop roadmap also includes **guaranteed Fence listings**, so a definition assigned to Fence can remain in his active inventory at its configured price across stock refreshes; an opt-in **ragfair filtering patch** that can hide trader offers from flea search; and a **stim-definition backup/export** option, so users can easily copy their custom stim definitions somewhere safe before making changes. A companion **delete all shipped stims** control will let users remove the full set of default Moar Supplies stimulants at once when they prefer not to use them.
+The future workshop roadmap also includes **guaranteed Fence listings**, so a definition assigned to Fence can remain in his active inventory at its configured price across stock refreshes; an opt-in **ragfair filtering patch** that can hide trader offers from flea search; and a **stim-definition backup/export** option, so users can easily copy their custom stim definitions somewhere safe before making changes.
+
+The Supply Database includes a confirmed **Delete all starter stims** action for a clean slate. It removes only the six stims shipped with Moar Supplies and preserves custom stims, drinks, foods, and medical packs. As with deleting one definition, remove or consume existing profile copies before restarting SPT, or back up the profile first.
 
 Experimental effects will remain opt-in and clearly labeled until they have been tested across the supported item families.
 

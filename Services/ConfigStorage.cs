@@ -21,6 +21,15 @@ public sealed class ConfigStorage
     private const string MedicalPackDirectoryName = "medical-packs";
     private const string LegacyFileName = "stims.json";
 
+    // These are the definitions included with Moar Supplies. Keeping this list
+    // explicit means the clean-slate action never removes user-created stims.
+    private static readonly HashSet<string> StarterStimIds = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "argus", "baldur", "disabled-control", "hydra", "ravana", "svarog"
+    };
+
+    public static bool IsStarterStimId(string stimId) => StarterStimIds.Contains(stimId);
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -227,6 +236,68 @@ public sealed class ConfigStorage
 
         _configState.Current = updatedConfig;
         return ConfigSaveResult.Success();
+    }
+
+    /// <summary>
+    /// Removes only stimulant definitions shipped with the mod, preserving all
+    /// user-created definitions and every other supply type.
+    /// </summary>
+    public async Task<ConfigBulkDeleteResult> DeleteStarterStimsAsync(CancellationToken cancellationToken)
+    {
+        ModConfig? current = _configState.Current;
+        if (current is null)
+        {
+            return ConfigBulkDeleteResult.Failure("A valid configuration must be loaded before starter stims can be deleted.");
+        }
+
+        List<StimDefinition> starterStims = current.Stims
+            .Where(stim => StarterStimIds.Contains(stim.Id))
+            .ToList();
+        if (starterStims.Count == 0)
+        {
+            return ConfigBulkDeleteResult.Success(0);
+        }
+
+        List<StimDefinition> remainingStims = current.Stims
+            .Where(stim => !StarterStimIds.Contains(stim.Id))
+            .ToList();
+        ModConfig updatedConfig = new()
+        {
+            Version = current.Version,
+            Debug = current.Debug,
+            EnableMappedItemTestClones = current.EnableMappedItemTestClones,
+            Stims = remainingStims,
+            Drinks = current.Drinks,
+            Foods = current.Foods,
+            MedicalPacks = current.MedicalPacks
+        };
+
+        try
+        {
+            string configDirectory = GetConfigDirectory();
+            string stimDirectory = Path.Combine(configDirectory, StimDirectoryName);
+            Directory.CreateDirectory(stimDirectory);
+
+            await WriteSplitConfigurationAsync(updatedConfig, cancellationToken);
+            foreach (StimDefinition starterStim in starterStims)
+            {
+                string definitionPath = Path.Combine(stimDirectory, $"{starterStim.Id}.json");
+                if (File.Exists(definitionPath)) File.Delete(definitionPath);
+            }
+
+            // Without this, a legacy installation with its final stim removed
+            // would load the deleted definitions again on the next server start.
+            string legacyPath = Path.Combine(configDirectory, LegacyFileName);
+            if (File.Exists(legacyPath)) File.Delete(legacyPath);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+        {
+            _logger.LogError(exception, "[MoarSupplies] Could not delete shipped starter stims.");
+            return ConfigBulkDeleteResult.Failure("The starter stims could not be deleted. Check the server log and that the config folder is writable.");
+        }
+
+        _configState.Current = updatedConfig;
+        return ConfigBulkDeleteResult.Success(starterStims.Count);
     }
 
     public async Task<ConfigSaveResult> SaveFoodAsync(FoodDefinition definition, string? originalId, CancellationToken cancellationToken)
@@ -485,4 +556,10 @@ public sealed record ConfigSaveResult(bool Succeeded, IReadOnlyList<string> Erro
     public static ConfigSaveResult Success() => new(true, []);
     public static ConfigSaveResult Failure(string error) => new(false, [error]);
     public static ConfigSaveResult Failure(IReadOnlyList<string> errors) => new(false, errors);
+}
+
+public sealed record ConfigBulkDeleteResult(bool Succeeded, int DeletedCount, IReadOnlyList<string> Errors)
+{
+    public static ConfigBulkDeleteResult Success(int deletedCount) => new(true, deletedCount, []);
+    public static ConfigBulkDeleteResult Failure(string error) => new(false, 0, [error]);
 }
